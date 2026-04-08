@@ -1,0 +1,22 @@
+{
+  "name": "skorifydata",
+  "version": "1.0.0",
+  "description": "SkorifyData - Polla Mundial migrations",
+  "main": "index.js",
+  "scripts": {
+    "db:up": "docker compose up -d",
+    "db:down": "docker compose down",
+    "migrate:make": "knex migrate:make",
+    "migrate:latest": "knex migrate:latest",
+    "migrate:rollback": "knex migrate:rollback",
+    "migrate:status": "knex migrate:status",
+    "setup": "docker compose up -d && sleep 3 && knex migrate:latest"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "knex": "^3.2.9",
+    "pg": "^8.20.0"
+  }
+}
