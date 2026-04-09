@@ -10,7 +10,8 @@
     "status": "docker compose run --rm --no-deps -e KNEX_COMMAND=migrate:status knex",
     "rollback": "docker compose run --rm --no-deps -e KNEX_COMMAND=migrate:rollback knex",
     "setup": "npm run db:up && npm run migrate",
-    "verify": "npm run status"
+    "verify": "npm run status",
+    "seed": "node seeders/initial_seed.js"
   },
   "keywords": [],
   "author": "",
