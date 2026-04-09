@@ -5,7 +5,7 @@
 exports.up = async function (knex) {
   // ── Users ──
   await knex.schema.createTable('users', (t) => {
-    t.increments('id').primary();
+    t.uuid('id').primary().defaultTo(knex.fn.uuid());
     t.string('name').notNullable();
     t.string('email').notNullable().unique();
     t.string('password_hash').notNullable();
@@ -15,63 +15,102 @@ exports.up = async function (knex) {
     t.timestamp("deleted_at", { useTz: true }).defaultTo(null);
   });
 
-  // ── Teams ──
-  await knex.schema.createTable('teams', (t) => {
-    t.increments('id').primary();
-    t.string('name').notNullable().unique();
-    t.string('code', 3).notNullable().unique(); // e.g. COL, BRA, ARG
-    t.string('flag_url');
-    t.string('group', 1);                        // e.g. A, B, C …
-    t.timestamp("created_at", { useTz: true }).defaultTo(knex.fn.now());
-  });
-
   // ── Tournaments ──
   await knex.schema.createTable('tournaments', (t) => {
-    t.increments('id').primary();
-    t.string('name').notNullable();              // e.g. "Mundial 2026"
+    t.uuid('id').primary().defaultTo(knex.fn.uuid());
+    t.string('name').notNullable();
     t.date('start_date');
     t.date('end_date');
     t.timestamp("created_at", { useTz: true }).defaultTo(knex.fn.now());
   });
 
-  // ── Matches ──
-  await knex.schema.createTable('matches', (t) => {
-    t.increments('id').primary();
-    t.integer('tournament_id').unsigned().references('id').inTable('tournaments').onDelete('CASCADE');
-    t.integer('home_team_id').unsigned().references('id').inTable('teams').onDelete('CASCADE');
-    t.integer('away_team_id').unsigned().references('id').inTable('teams').onDelete('CASCADE');
-    t.timestamp('match_date').notNullable();
-    t.string('stage').defaultTo('group');        // group, round_of_16, quarter, semi, final
-    t.string('venue');
-    t.integer('home_score');
-    t.integer('away_score');
-    t.enu('status', ['scheduled', 'in_progress', 'finished']).defaultTo('scheduled');
+  // ── Teams ──
+  await knex.schema.createTable('teams', (t) => {
+    t.uuid('id').primary().defaultTo(knex.fn.uuid());
+    t.string('name').notNullable();
+    t.string('code').notNullable().unique();
+    t.string('shield_url');
     t.timestamp("created_at", { useTz: true }).defaultTo(knex.fn.now());
+    t.timestamp("updated_at", { useTz: true }).defaultTo(null);
+    t.timestamp("deleted_at", { useTz: true }).defaultTo(null);
   });
 
-  // ── Predictions (la polla) ──
-  await knex.schema.createTable('predictions', (t) => {
-    t.increments('id').primary();
-    t.integer('user_id').unsigned().references('id').inTable('users').onDelete('CASCADE');
-    t.integer('match_id').unsigned().references('id').inTable('matches').onDelete('CASCADE');
-    t.integer('home_score').notNullable();
-    t.integer('away_score').notNullable();
-    t.integer('points_earned').defaultTo(0);
-    t.unique(['user_id', 'match_id']); // one prediction per user per match
+  // ── Tournament Teams (pivot) ──
+  await knex.schema.createTable('tournament_teams', (t) => {
+    t.uuid('id').primary().defaultTo(knex.fn.uuid());
+    t.uuid('team_id').notNullable().references('id').inTable('teams').onDelete('CASCADE');
+    t.uuid('tournament_id').notNullable().references('id').inTable('tournaments').onDelete('CASCADE');
+    t.unique(['team_id', 'tournament_id']);
+  });
+
+  // ── Groups ──
+  await knex.schema.createTable('groups', (t) => {
+    t.uuid('id').primary().defaultTo(knex.fn.uuid());
+    t.uuid('tournament_id').notNullable().references('id').inTable('tournaments').onDelete('CASCADE');
+    t.string('group_name').notNullable();
+    t.timestamp("created_at", { useTz: true }).defaultTo(knex.fn.now());
+    t.timestamp("updated_at", { useTz: true }).defaultTo(null);
+    t.timestamp("deleted_at", { useTz: true }).defaultTo(null);
+    t.unique(['tournament_id', 'group_name']);
+  });
+
+  // ── Group Teams (pivot) ──
+  await knex.schema.createTable('group_teams', (t) => {
+    t.uuid('id').primary().defaultTo(knex.fn.uuid());
+    t.uuid('team_id').notNullable().references('id').inTable('teams').onDelete('CASCADE');
+    t.uuid('group_id').notNullable().references('id').inTable('groups').onDelete('CASCADE');
+    t.unique(['team_id', 'group_id']);
+  });
+
+  // ── Matches ──
+  await knex.schema.createTable('matches', (t) => {
+    t.uuid('id').primary().defaultTo(knex.fn.uuid());
+    t.uuid('home_team_id').notNullable().references('id').inTable('teams').onDelete('CASCADE');
+    t.uuid('away_team_id').notNullable().references('id').inTable('teams').onDelete('CASCADE');
+    t.uuid('tournament_id').notNullable().references('id').inTable('tournaments').onDelete('CASCADE');
+    t.timestamp('kick_off').notNullable();
+    t.integer('home_goals');
+    t.integer('away_goals');
+    t.enu('status', ['scheduled', 'in_progress', 'finished']).notNullable().defaultTo('scheduled');
+    t.enu('stage', ['group', 'finals']).notNullable().defaultTo('group');
+    t.string('venue');
     t.timestamp("created_at", { useTz: true }).defaultTo(knex.fn.now());
     t.timestamp("updated_at", { useTz: true }).defaultTo(null);
   });
 
+  // ── Predictions ──
+  await knex.schema.createTable('predictions', (t) => {
+    t.uuid('id').primary().defaultTo(knex.fn.uuid());
+    t.uuid('user_id').notNullable().references('id').inTable('users').onDelete('CASCADE');
+    t.uuid('match_id').notNullable().references('id').inTable('matches').onDelete('CASCADE');
+    t.integer('pred_home_goals').notNullable();
+    t.integer('pred_away_goals').notNullable();
+    t.integer('earned_points').defaultTo(0);
+    t.unique(['user_id', 'match_id']);
+    t.timestamp("created_at", { useTz: true }).defaultTo(knex.fn.now());
+    t.timestamp("updated_at", { useTz: true }).defaultTo(null);
+    t.timestamp("deleted_at", { useTz: true }).defaultTo(null);
+  });
 
-  // TODO :: review this part or using redis
-  // ── Leaderboard (cache of aggregated points) ──
+  // ── Payments ──
+  await knex.schema.createTable('payments', (t) => {
+    t.uuid('id').primary().defaultTo(knex.fn.uuid());
+    t.uuid('user_id').notNullable().references('id').inTable('users').onDelete('CASCADE');
+    t.uuid('tournament_id').notNullable().references('id').inTable('tournaments').onDelete('CASCADE');
+    t.enu('state_pay', ['fallido', 'pendiente', 'pagado']).notNullable().defaultTo('pendiente');
+    t.timestamp("created_at", { useTz: true }).defaultTo(knex.fn.now());
+    t.timestamp("updated_at", { useTz: true }).defaultTo(null);
+    t.unique(['user_id', 'tournament_id']);
+  });
+
+  // ── Leaderboard ──
   await knex.schema.createTable('leaderboard', (t) => {
-    t.increments('id').primary();
-    t.integer('user_id').unsigned().references('id').inTable('users').onDelete('CASCADE');
-    t.integer('tournament_id').unsigned().references('id').inTable('tournaments').onDelete('CASCADE');
+    t.uuid('id').primary().defaultTo(knex.fn.uuid());
+    t.uuid('user_id').notNullable().references('id').inTable('users').onDelete('CASCADE');
+    t.uuid('tournament_id').notNullable().references('id').inTable('tournaments').onDelete('CASCADE');
     t.integer('total_points').defaultTo(0);
-    t.integer('exact_hits').defaultTo(0);       // predicted exact score
-    t.integer('outcome_hits').defaultTo(0);     // predicted winner only
+    t.integer('exact_hits').defaultTo(0);
+    t.integer('outcome_hits').defaultTo(0);
     t.unique(['user_id', 'tournament_id']);
     t.timestamp("created_at", { useTz: true }).defaultTo(knex.fn.now());
     t.timestamp("updated_at", { useTz: true }).defaultTo(null);
@@ -84,8 +123,12 @@ exports.up = async function (knex) {
  */
 exports.down = async function (knex) {
   await knex.schema.dropTableIfExists('leaderboard');
+  await knex.schema.dropTableIfExists('payments');
   await knex.schema.dropTableIfExists('predictions');
   await knex.schema.dropTableIfExists('matches');
+  await knex.schema.dropTableIfExists('group_teams');
+  await knex.schema.dropTableIfExists('groups');
+  await knex.schema.dropTableIfExists('tournament_teams');
   await knex.schema.dropTableIfExists('tournaments');
   await knex.schema.dropTableIfExists('teams');
   await knex.schema.dropTableIfExists('users');
