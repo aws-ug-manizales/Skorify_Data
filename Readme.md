@@ -44,6 +44,12 @@ DB_NAME=
 DB_USER=
 DB_PASSWORD=
 ```
+## Forma corta
+```bash
+    docker compose up -d
+    npx knex migrate:up
+    npm run seed
+```
 
 3. Levantar PostgreSQL:
 
