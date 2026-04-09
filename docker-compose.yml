@@ -1,18 +1,44 @@
-version: '3.8'
-
 services:
   postgres:
     image: postgres:18.3-alpine
     container_name: skorify_db
     restart: unless-stopped
     ports:
-      - '5432:5432'
+      - '${DB_PORT:-5432}:5432'
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: password
-      POSTGRES_DB: polla_mundial
+      POSTGRES_USER: ${DB_USER:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-password}
+      POSTGRES_DB: ${DB_NAME:-polla_mundial}
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U ${DB_USER:-postgres} -d ${DB_NAME:-polla_mundial}']
+      interval: 5s
+      timeout: 5s
+      retries: 10
     volumes:
       - pgdata:/var/lib/postgresql/data
 
+  knex:
+    image: node:24-alpine
+    profiles: ['tools']
+    working_dir: /workspace
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: ${DB_NAME}
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      KNEX_COMMAND: ${KNEX_COMMAND}
+    entrypoint:
+      - sh
+      - -lc
+      - npm ci --no-audit --no-fund && npx knex $${KNEX_COMMAND}
+    volumes:
+      - ./:/workspace
+      - knex_node_modules:/workspace/node_modules
+
 volumes:
   pgdata:
+  knex_node_modules:
