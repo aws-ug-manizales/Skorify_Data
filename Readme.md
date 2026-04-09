@@ -2,6 +2,10 @@
 
 Migraciones de base de datos para la Polla Mundial usando Knex + PostgreSQL en Docker
 
+## Modelo Entidad Relacion
+
+![Diagrama ER](docs/SkorifyDB.jpeg)
+
 ## Requisitos
 
 - Node.js 24.14.1 (LTS)
