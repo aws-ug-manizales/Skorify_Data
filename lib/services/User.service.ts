@@ -1,5 +1,5 @@
-import { Repository } from "typeorm";
-import { UserEntity } from "../entities/User.entity";
+import { IsNull, Repository } from "typeorm";
+import { User as UserEntity } from "../../entities/User";
 import { BaseDataService } from "./base.service";
 
 export class UserService extends BaseDataService<UserEntity> {
@@ -25,7 +25,7 @@ export class UserService extends BaseDataService<UserEntity> {
      */
     async findAllActive(): Promise<UserEntity[]> {
         return await this.repository.find({
-            where: { isActive: true }
+            where: { deleted_at: IsNull() }
         });
     }
 
@@ -33,13 +33,13 @@ export class UserService extends BaseDataService<UserEntity> {
      * Busca por ID
      */
     async findById(id: string): Promise<UserEntity | null> {
-        return await this.repository.findOneBy({ id } as any);
+        return await this.repository.findOne({ where: { id, deleted_at: IsNull() } });
     }
 
     /**
      * Eliminación lógica (Soft Delete)
      */
     async softDelete(id: string): Promise<void> {
-        await this.repository.softDelete(id);
+        await this.repository.update(id, { deleted_at: new Date() });
     }
 }
