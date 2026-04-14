@@ -13,19 +13,19 @@ import { Group } from './Group';
 @Unique(['team_id', 'group_id'])
 export class GroupTeam {
   @PrimaryGeneratedColumn('uuid')
-  id: string;
+  id!: string;
 
   @Column({ type: 'uuid' })
-  team_id: string;
+  team_id!: string;
 
   @Column({ type: 'uuid' })
-  group_id: string;
+  group_id!: string;
 
   @ManyToOne(() => Team, (t) => t.group_teams, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'team_id' })
-  team: Team;
+  team!: Team;
 
   @ManyToOne(() => Group, (g) => g.group_teams, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'group_id' })
-  group: Group;
+  group!: Group;
 }

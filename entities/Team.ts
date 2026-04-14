@@ -13,35 +13,35 @@ import { Match } from './Match';
 @Entity('teams')
 export class Team {
   @PrimaryGeneratedColumn('uuid')
-  id: string;
+  id!: string;
 
   @Column({ type: 'varchar' })
-  name: string;
+  name!: string;
 
   @Column({ type: 'varchar', unique: true })
-  code: string;
+  code!: string;
 
   @Column({ type: 'varchar', nullable: true })
-  shield_url: string | null;
+  shield_url!: string | null;
 
   @CreateDateColumn({ type: 'timestamptz' })
-  created_at: Date;
+  created_at!: Date;
 
   @UpdateDateColumn({ type: 'timestamptz', nullable: true, default: null })
-  updated_at: Date | null;
+  updated_at!: Date | null;
 
   @Column({ type: 'timestamptz', nullable: true, default: null })
-  deleted_at: Date | null;
+  deleted_at!: Date | null;
 
   @OneToMany(() => TournamentTeam, (tt) => tt.team)
-  tournament_teams: TournamentTeam[];
+  tournament_teams!: TournamentTeam[];
 
   @OneToMany(() => GroupTeam, (gt) => gt.team)
-  group_teams: GroupTeam[];
+  group_teams!: GroupTeam[];
 
   @OneToMany(() => Match, (m) => m.home_team)
-  home_matches: Match[];
+  home_matches!: Match[];
 
   @OneToMany(() => Match, (m) => m.away_team)
-  away_matches: Match[];
+  away_matches!: Match[];
 }
