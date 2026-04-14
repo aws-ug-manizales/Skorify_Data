@@ -2,8 +2,11 @@
   "name": "skorifydata",
   "version": "1.0.0",
   "description": "SkorifyData - Polla Mundial migrations",
-  "main": "index.js",
+  "main": "dist/lib/index.js",
+  "types": "dist/lib/index.d.ts",
   "scripts": {
+    "build": "tsc",
+    "prepare": "npm run build",
     "db:up": "docker compose up -d --wait postgres",
     "db:down": "docker compose down",
     "migrate": "docker compose run --rm --no-deps knex",
