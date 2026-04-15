@@ -6,7 +6,6 @@
   "types": "dist/lib/index.d.ts",
   "scripts": {
     "build": "tsc",
-    "prepare": "npm run build",
     "db:up": "docker compose up -d --wait postgres",
     "db:down": "docker compose down",
     "migrate": "docker compose run --rm --no-deps knex",
