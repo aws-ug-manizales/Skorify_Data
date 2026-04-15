@@ -4,8 +4,171 @@ Migraciones de base de datos para la Polla Mundial usando Knex + PostgreSQL en D
 
 ## Modelo Entidad Relacion
 
-![Diagrama ER](docs/SkorifyDB.jpeg)
+![Diagrama ER](docs/SkorifyDB.png)
 
+
+## Codigo Mermeid del modelo
+```mermeid
+---
+config:
+  look: neo
+  theme: mc
+---
+erDiagram
+	direction RL
+	USERS {
+		uuid id PK ""  
+		varchar name  ""  
+		varchar email  "UNIQUE"  
+		varchar password_hash  ""  
+		varchar avatar_url  ""  
+		varchar role  ""  
+		timestamp created_at  ""  
+		timestamp updated_at  ""  
+		timestamp deleted_at  ""  
+	}
+
+	TOURNAMENTS {
+		uuid id PK ""  
+		varchar name  ""  
+		date start_date  ""  
+		date end_date  ""  
+		timestamp created_at  ""  
+	}
+
+	PAYMENTS {
+		uuid id PK ""  
+		uuid user_id FK ""  
+		uuid tournament_id FK ""  
+		varchar state_pay  "fallido | pendiente | pagado"  
+		timestamp created_at  ""  
+		timestamp updated_at  ""  
+	}
+
+	TEAMS {
+		uuid id PK ""  
+		varchar name  ""  
+		varchar code  "UNIQUE"  
+		varchar shield_url  ""  
+		timestamp created_at  ""  
+		timestamp updated_at  ""  
+		timestamp deleted_at  ""  
+	}
+
+	TOURNAMENT_TEAMS {
+		uuid id PK ""  
+		uuid team_id FK ""  
+		uuid tournament_id FK ""  
+	}
+
+	GROUPS {
+		uuid id PK ""  
+		uuid tournament_id FK ""  
+		varchar group_name  ""  
+		timestamp created_at  ""  
+		timestamp updated_at  ""  
+		timestamp deleted_at  ""  
+	}
+
+	GROUP_TEAMS {
+		uuid id PK ""  
+		uuid team_id FK ""  
+		uuid group_id FK ""  
+	}
+
+	MATCHES {
+		uuid id PK ""  
+		uuid home_team_id FK ""  
+		uuid away_team_id FK ""  
+		uuid tournament_id FK ""  
+		timestamp kick_off  ""  
+		int home_goals  ""  
+		int away_goals  ""  
+		varchar status  "'scheduled' | 'in_progress' | 'finished'"  
+		varchar stage  "group | finals"  
+		varchar venue  ""  
+		timestamp created_at  ""  
+		timestamp updated_at  ""  
+	}
+
+	PREDICTIONS {
+		uuid id PK ""  
+		uuid instance_player_id FK ""  
+		uuid match_id FK ""  
+		int pred_home_goals  ""  
+		int pred_away_goals  ""  
+		int earned_points  ""  
+		timestamp created_at  ""  
+		timestamp updated_at  ""  
+		timestamp deleted_at  ""  
+		varchar user_id_match_id  "UNIQUE"  
+	}
+
+	LEADERBOARD {
+		uuid id PK ""  
+		uuid user_id FK ""  
+		uuid tournament_id FK ""  
+		int position ""
+		int total_points  ""  
+		int exact_hits  ""  
+		int outcome_hits  ""  
+		timestamp created_at  ""  
+		timestamp updated_at  ""  
+	}
+
+	INSTANCES {
+		uuid id PK ""
+		uuid tournament_id FK
+		uuid owner_user_id FK
+		uuid validator_user_id FK
+		varchar state "Aprobado, En Espera, Denegada"
+		varchar name
+		int price
+		timestamp update_at
+		timestamp deleted_at
+		timestamp created_at
+	}
+
+	INSTANCE_USERS {
+		uuid id PK
+		uuid player_id FK
+		uuid instance_id FK
+		timestamp joined_at
+		timestamp created_at
+	}
+	INSTANCE_RULES {
+		uuid id PK
+		uuid instance_id FK
+		uuid rule_id FK
+	}
+	%% Reglas para cada instancia
+	RULES {
+		uuid id
+		varchar name
+		varchar description 
+	}
+
+	INSTANCES||--o{INSTANCE_RULES: ""
+	RULES||--o{INSTANCE_RULES: ""
+
+	TOURNAMENTS||--o{INSTANCES: ""
+	USERS||--o{INSTANCE_USERS: ""
+	INSTANCES||--o{INSTANCE_USERS:""
+	USERS||--o{LEADERBOARD:"ranks"
+	TOURNAMENTS||--o{LEADERBOARD:"ranks"
+	INSTANCE_USERS||--o{PREDICTIONS:"makes"
+	MATCHES||--o{PREDICTIONS:"has"
+	TEAMS||--o{TOURNAMENT_TEAMS:"belong_to"
+	TOURNAMENTS||--o{TOURNAMENT_TEAMS:"belong_to"
+	TOURNAMENTS||--o{MATCHES:"contains"
+	TEAMS||--o{MATCHES:"home_team"
+	TEAMS||--o{MATCHES:"away_team"
+	TEAMS||--o{GROUP_TEAMS:"belongs"
+	GROUPS||--o{GROUP_TEAMS:"has"
+	TOURNAMENTS||--o{GROUPS:"defines"
+	USERS||--o{PAYMENTS:"pays"
+	TOURNAMENTS||--o{PAYMENTS:"belong"
+```
 ## Requisitos
 
 - Node.js 24.14.1 (LTS)
