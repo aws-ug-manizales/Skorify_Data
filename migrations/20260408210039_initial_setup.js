@@ -93,7 +93,7 @@ exports.up = async function (knex) {
     t.uuid('tournament_id').notNullable().references('id').inTable('tournaments').onDelete('CASCADE');
     t.uuid('owner_user_id').notNullable().references('id').inTable('users').onDelete('CASCADE');
     t.uuid('validator_user_id').references('id').inTable('users').onDelete('SET NULL');
-    t.enu('state', ['Aprobado', 'En Espera', 'Denegada']).notNullable().defaultTo('En Espera');
+    t.enu('state', ['approved', 'pending', 'denied']).notNullable().defaultTo('pending');
     t.string('name').notNullable();
     t.integer('price').notNullable().defaultTo(0);
     t.timestamp("created_at", { useTz: true }).defaultTo(knex.fn.now());

@@ -29,10 +29,10 @@ export class Instance {
 
   @Column({
     type: 'enum',
-    enum: ['Aprobado', 'En Espera', 'Denegada'],
-    default: 'En Espera',
+    enum: ['approved', 'pending', 'denied'],
+    default: 'pending',
   })
-  state!: 'Aprobado' | 'En Espera' | 'Denegada';
+  state!: 'approved' | 'pending' | 'denied';
 
   @Column({ type: 'varchar' })
   name!: string;

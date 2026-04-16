@@ -25,7 +25,7 @@ async function run() {
     tournament_id: tournament.id,
     owner_user_id: users[0].id,
     name: 'Polla Manizales',
-    state: 'Aprobado',
+    state: 'approved',
     price: 20000,
   });
   console.log(`Created instance: ${instance.name} (state: ${instance.state}, price: ${instance.price})`);

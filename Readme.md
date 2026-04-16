@@ -121,7 +121,7 @@ erDiagram
 		uuid tournament_id FK
 		uuid owner_user_id FK
 		uuid validator_user_id FK
-		varchar state "Aprobado, En Espera, Denegada"
+		varchar state "approved, pending, denied"
 		varchar name
 		int price
 		timestamp update_at

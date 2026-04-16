@@ -8,7 +8,7 @@ const db = knex(config);
  * @property {string}  [tournament_id]
  * @property {string}  [owner_user_id]
  * @property {string}  [validator_user_id]
- * @property {string}  [state]           - Aprobado | En Espera | Denegada
+ * @property {string}  [state]           - approved | pending | denied
  * @property {string}  [name]
  * @property {number}  [price]
  */
@@ -26,7 +26,7 @@ function build(overrides = {}) {
   counter++;
   return {
     name: `Polla ${counter}`,
-    state: 'En Espera',
+    state: 'pending',
     price: 10000,
     ...overrides,
   };
