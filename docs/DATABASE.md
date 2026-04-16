@@ -42,7 +42,7 @@ Controla si un usuario ha pagado para participar en un torneo.
 - id (PK)
 - user_id (FK → USERS)
 - tournament_id (FK → TOURNAMENTS)
-- state_pay: Estado del pago (fallido | pendiente | pagado)
+- state_pay: Estado del pago (failed | pending | paid)
 - created_at
 - updated_at
 

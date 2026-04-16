@@ -139,7 +139,7 @@ exports.up = async function (knex) {
     t.uuid('id').primary().defaultTo(knex.fn.uuid());
     t.uuid('user_id').notNullable().references('id').inTable('users').onDelete('CASCADE');
     t.uuid('tournament_id').notNullable().references('id').inTable('tournaments').onDelete('CASCADE');
-    t.enu('state_pay', ['fallido', 'pendiente', 'pagado']).notNullable().defaultTo('pendiente');
+    t.enu('state_pay', ['failed', 'pending', 'paid']).notNullable().defaultTo('pending');
     t.timestamp("created_at", { useTz: true }).defaultTo(knex.fn.now());
     t.timestamp("updated_at", { useTz: true }).defaultTo(null);
     t.unique(['user_id', 'tournament_id']);

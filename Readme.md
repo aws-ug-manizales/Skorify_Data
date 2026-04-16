@@ -40,7 +40,7 @@ erDiagram
 		uuid id PK ""  
 		uuid user_id FK ""  
 		uuid tournament_id FK ""  
-		varchar state_pay  "fallido | pendiente | pagado"  
+		varchar state_pay  "failed | pending | paid"  
 		timestamp created_at  ""  
 		timestamp updated_at  ""  
 	}
