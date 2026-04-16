@@ -9,6 +9,7 @@ const db = knex(config);
  * @property {string}  [email]
  * @property {string}  [password_hash]
  * @property {string}  [avatar_url]
+ * @property {string}  [role]
  */
 
 const TABLE = 'users';
@@ -27,6 +28,7 @@ function build(overrides = {}) {
     email: `user${counter}@test.com`,
     password_hash: 'hashed_password',
     avatar_url: null,
+    role: null,
     ...overrides,
   };
 }

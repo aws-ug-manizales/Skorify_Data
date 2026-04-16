@@ -140,12 +140,14 @@ erDiagram
 		uuid id PK
 		uuid instance_id FK
 		uuid rule_id FK
+		timestamp created_at
 	}
 	%% Reglas para cada instancia
 	RULES {
 		uuid id
 		varchar name
-		varchar description 
+		varchar description
+		timestamp created_at 
 	}
 
 	INSTANCES||--o{INSTANCE_RULES: ""

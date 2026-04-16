@@ -8,17 +8,17 @@ import {
   JoinColumn,
   Unique,
 } from 'typeorm';
-import type { User } from './User';
+import type { InstanceUser } from './InstanceUser';
 import type { Match } from './Match';
 
 @Entity('predictions')
-@Unique(['user_id', 'match_id'])
+@Unique(['instance_player_id', 'match_id'])
 export class Prediction {
   @PrimaryGeneratedColumn('uuid')
   id!: string;
 
   @Column({ type: 'uuid' })
-  user_id!: string;
+  instance_player_id!: string;
 
   @Column({ type: 'uuid' })
   match_id!: string;
@@ -41,9 +41,9 @@ export class Prediction {
   @Column({ type: 'timestamptz', nullable: true, default: null })
   deleted_at!: Date | null;
 
-  @ManyToOne('User', 'predictions', { onDelete: 'CASCADE' })
-  @JoinColumn({ name: 'user_id' })
-  user!: User;
+  @ManyToOne('InstanceUser', 'predictions', { onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'instance_player_id' })
+  instance_player!: InstanceUser;
 
   @ManyToOne('Match', 'predictions', { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'match_id' })

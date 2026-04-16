@@ -1,11 +1,11 @@
 const knex = require('knex');
 const config = require('../knexfile');
-const { UserFactory, TournamentFactory } = require('../factories');
+const { UserFactory, TournamentFactory, InstanceFactory, InstanceUserFactory } = require('../factories');
 
 const db = knex(config);
 
 async function run() {
-  console.log('Seeding users and tournament...\n');
+  console.log('Seeding users, tournament, instance and players...\n');
 
   // Create 5 users
   const users = await UserFactory.createMany(5);
@@ -20,7 +20,26 @@ async function run() {
   });
   console.log(`Created tournament: ${tournament.name} (${tournament.start_date} → ${tournament.end_date})`);
 
-  console.log('Seeding complete!');
+  // Create 1 instance (polla) owned by first user
+  const instance = await InstanceFactory.create({
+    tournament_id: tournament.id,
+    owner_user_id: users[0].id,
+    name: 'Polla Manizales',
+    state: 'Aprobado',
+    price: 20000,
+  });
+  console.log(`Created instance: ${instance.name} (state: ${instance.state}, price: ${instance.price})`);
+
+  // Add all users as players of the instance
+  for (const user of users) {
+    await InstanceUserFactory.create({
+      player_id: user.id,
+      instance_id: instance.id,
+    });
+  }
+  console.log(`Added ${users.length} players to instance "${instance.name}"`);
+
+  console.log('\nSeeding complete!');
 }
 
 run()
@@ -32,4 +51,6 @@ run()
     db.destroy();
     UserFactory.db.destroy();
     TournamentFactory.db.destroy();
+    InstanceFactory.db.destroy();
+    InstanceUserFactory.db.destroy();
   });
