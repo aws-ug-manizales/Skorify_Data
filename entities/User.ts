@@ -28,8 +28,12 @@ export class User {
   @Column({ type: 'varchar', nullable: true })
   avatar_url!: string | null;
 
-  @Column({ type: 'varchar', nullable: true })
-  role!: string | null;
+  @Column({
+    type: 'enum',
+    enum: ['general', 'global', 'instance'],
+    default: 'general',
+  })
+  role!: 'general' | 'global' | 'instance';
 
   @CreateDateColumn({ type: 'timestamptz' })
   created_at!: Date;

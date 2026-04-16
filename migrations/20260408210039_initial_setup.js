@@ -10,7 +10,7 @@ exports.up = async function (knex) {
     t.string('email').notNullable().unique();
     t.string('password_hash').notNullable();
     t.string('avatar_url');
-    t.string('role');
+    t.enu('role', ['general', 'global', 'instance']).notNullable().defaultTo('general');
     t.timestamp("created_at", { useTz: true }).defaultTo(knex.fn.now());
     t.timestamp("updated_at", { useTz: true }).defaultTo(null);
     t.timestamp("deleted_at", { useTz: true }).defaultTo(null);

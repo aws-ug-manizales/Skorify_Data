@@ -22,7 +22,7 @@ erDiagram
 		varchar email  "UNIQUE"  
 		varchar password_hash  ""  
 		varchar avatar_url  ""  
-		varchar role  ""  
+		varchar role  "general | global | instance"  
 		timestamp created_at  ""  
 		timestamp updated_at  ""  
 		timestamp deleted_at  ""  
