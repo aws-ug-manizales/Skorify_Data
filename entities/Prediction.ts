@@ -8,44 +8,44 @@ import {
   JoinColumn,
   Unique,
 } from 'typeorm';
-import { User } from './User';
-import { Match } from './Match';
+import type { User } from './User';
+import type { Match } from './Match';
 
 @Entity('predictions')
 @Unique(['user_id', 'match_id'])
 export class Prediction {
   @PrimaryGeneratedColumn('uuid')
-  id: string;
+  id!: string;
 
   @Column({ type: 'uuid' })
-  user_id: string;
+  user_id!: string;
 
   @Column({ type: 'uuid' })
-  match_id: string;
+  match_id!: string;
 
   @Column({ type: 'int' })
-  pred_home_goals: number;
+  pred_home_goals!: number;
 
   @Column({ type: 'int' })
-  pred_away_goals: number;
+  pred_away_goals!: number;
 
   @Column({ type: 'int', default: 0 })
-  earned_points: number;
+  earned_points!: number;
 
   @CreateDateColumn({ type: 'timestamptz' })
-  created_at: Date;
+  created_at!: Date;
 
   @UpdateDateColumn({ type: 'timestamptz', nullable: true, default: null })
-  updated_at: Date | null;
+  updated_at!: Date | null;
 
   @Column({ type: 'timestamptz', nullable: true, default: null })
-  deleted_at: Date | null;
+  deleted_at!: Date | null;
 
-  @ManyToOne(() => User, (u) => u.predictions, { onDelete: 'CASCADE' })
+  @ManyToOne('User', 'predictions', { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'user_id' })
-  user: User;
+  user!: User;
 
-  @ManyToOne(() => Match, (m) => m.predictions, { onDelete: 'CASCADE' })
+  @ManyToOne('Match', 'predictions', { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'match_id' })
-  match: Match;
+  match!: Match;
 }
