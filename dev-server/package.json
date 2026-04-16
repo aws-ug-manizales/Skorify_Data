@@ -3,16 +3,20 @@
   "private": true,
   "version": "0.0.0",
   "description": "Local dev instance to test the compiled skorifydata package.",
-  "main": "server.js",
+  "packageManager": "pnpm@10.33.0",
+  "main": "server.ts",
   "scripts": {
-    "dev": "nodemon server.js",
-    "start": "node server.js"
+    "dev": "tsx watch server.ts",
+    "start": "tsx server.ts"
   },
   "dependencies": {
     "express": "^5.1.0",
     "skorifydata": "file:.."
   },
   "devDependencies": {
-    "nodemon": "^3.1.10"
+    "@types/express": "^5.0.3",
+    "@types/node": "^24.6.0",
+    "tsx": "^4.20.6",
+    "typescript": "^5.9.3"
   }
 }
