@@ -8,3 +8,7 @@ export { Match } from './Match';
 export { Prediction } from './Prediction';
 export { Payment } from './Payment';
 export { Leaderboard } from './Leaderboard';
+export { Rule } from './Rule';
+export { Instance } from './Instance';
+export { InstanceUser } from './InstanceUser';
+export { InstanceRule } from './InstanceRule';

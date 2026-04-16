@@ -22,7 +22,7 @@ erDiagram
 		varchar email  "UNIQUE"  
 		varchar password_hash  ""  
 		varchar avatar_url  ""  
-		varchar role  ""  
+		varchar role  "general | global | instance"  
 		timestamp created_at  ""  
 		timestamp updated_at  ""  
 		timestamp deleted_at  ""  
@@ -40,7 +40,7 @@ erDiagram
 		uuid id PK ""  
 		uuid user_id FK ""  
 		uuid tournament_id FK ""  
-		varchar state_pay  "fallido | pendiente | pagado"  
+		varchar state_pay  "failed | pending | paid"  
 		timestamp created_at  ""  
 		timestamp updated_at  ""  
 	}
@@ -121,7 +121,7 @@ erDiagram
 		uuid tournament_id FK
 		uuid owner_user_id FK
 		uuid validator_user_id FK
-		varchar state "Aprobado, En Espera, Denegada"
+		varchar state "approved, pending, denied"
 		varchar name
 		int price
 		timestamp update_at
@@ -140,12 +140,14 @@ erDiagram
 		uuid id PK
 		uuid instance_id FK
 		uuid rule_id FK
+		timestamp created_at
 	}
 	%% Reglas para cada instancia
 	RULES {
 		uuid id
 		varchar name
-		varchar description 
+		varchar description
+		timestamp created_at 
 	}
 
 	INSTANCES||--o{INSTANCE_RULES: ""

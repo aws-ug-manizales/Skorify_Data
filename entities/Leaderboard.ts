@@ -23,6 +23,9 @@ export class Leaderboard {
   @Column({ type: 'uuid' })
   tournament_id!: string;
 
+  @Column({ type: 'int', nullable: true })
+  position!: number | null;
+
   @Column({ type: 'int', default: 0 })
   total_points!: number;
 
