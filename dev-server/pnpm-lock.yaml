@@ -12,8 +12,8 @@ importers:
         specifier: ^5.1.0
         version: 5.2.1
       skorifydata:
-        specifier: file:..
-        version: file:..
+        specifier: github:aws-ug-manizales/Skorify_Data#v1.0.0-beta.2
+        version: https://codeload.github.com/aws-ug-manizales/Skorify_Data/tar.gz/799d5b8c55b1ba8248b915041295bfbecd58f50e
     devDependencies:
       '@types/express':
         specifier: ^5.0.3
@@ -823,8 +823,9 @@ packages:
     resolution: {integrity: sha512-bzyZ1e88w9O1iNJbKnOlvYTrWPDl46O1bG0D3XInv+9tkPrxrN8jUUTiFlDkkmKWgn1M6CfIA13SuGqOa9Korw==}
     engines: {node: '>=14'}
 
-  skorifydata@file:..:
-    resolution: {directory: .., type: directory}
+  skorifydata@https://codeload.github.com/aws-ug-manizales/Skorify_Data/tar.gz/799d5b8c55b1ba8248b915041295bfbecd58f50e:
+    resolution: {tarball: https://codeload.github.com/aws-ug-manizales/Skorify_Data/tar.gz/799d5b8c55b1ba8248b915041295bfbecd58f50e}
+    version: 1.0.0-beta
 
   split2@4.2.0:
     resolution: {integrity: sha512-UcjcJOWknrNkF6PLX83qcHM6KHgVKNkV62Y8a5uYDVv9ydGQVwAHMKqHdJje1VTWpljG0WYpCDhrCdAOYH4TWg==}
@@ -1745,7 +1746,7 @@ snapshots:
 
   signal-exit@4.1.0: {}
 
-  skorifydata@file:..:
+  skorifydata@https://codeload.github.com/aws-ug-manizales/Skorify_Data/tar.gz/799d5b8c55b1ba8248b915041295bfbecd58f50e:
     dependencies:
       class-transformer: 0.5.1
       class-validator: 0.15.1
