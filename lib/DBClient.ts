@@ -2,10 +2,14 @@ import "reflect-metadata";
 import { DataSource, DataSourceOptions } from "typeorm";
 import { Group } from "../entities/Group";
 import { GroupTeam } from "../entities/GroupTeam";
+import { Instance } from "../entities/Instance";
+import { InstanceRule } from "../entities/InstanceRule";
+import { InstanceUser } from "../entities/InstanceUser";
 import { Leaderboard } from "../entities/Leaderboard";
 import { Match } from "../entities/Match";
 import { Payment } from "../entities/Payment";
 import { Prediction } from "../entities/Prediction";
+import { Rule } from "../entities/Rule";
 import { Team } from "../entities/Team";
 import { Tournament } from "../entities/Tournament";
 import { TournamentTeam } from "../entities/TournamentTeam";
@@ -20,6 +24,10 @@ const DEFAULT_ENTITIES = [
     Group,
     GroupTeam,
     Match,
+    Rule,
+    Instance,
+    InstanceUser,
+    InstanceRule,
     Prediction,
     Payment,
     Leaderboard,
