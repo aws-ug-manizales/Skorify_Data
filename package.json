@@ -23,7 +23,7 @@
     "rollback": "docker compose run --rm --no-deps -e KNEX_COMMAND=migrate:rollback knex",
     "setup": "pnpm run db:up && pnpm run migrate",
     "verify": "pnpm run status",
-    "prepack": "pnpm run build",
+    "prepack": "npm run build",
     "seed": "node seeders/initial_seed.js"
   },
   "keywords": [],
