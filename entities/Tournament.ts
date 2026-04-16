@@ -10,6 +10,7 @@ import type { Group } from './Group';
 import type { Match } from './Match';
 import type { Payment } from './Payment';
 import type { Leaderboard } from './Leaderboard';
+import type { Instance } from './Instance';
 
 @Entity('tournaments')
 export class Tournament {
@@ -42,4 +43,7 @@ export class Tournament {
 
   @OneToMany('Leaderboard', 'tournament')
   leaderboard!: Leaderboard[];
+
+  @OneToMany('Instance', 'tournament')
+  instances!: Instance[];
 }

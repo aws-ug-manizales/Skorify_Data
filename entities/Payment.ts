@@ -25,10 +25,10 @@ export class Payment {
 
   @Column({
     type: 'enum',
-    enum: ['fallido', 'pendiente', 'pagado'],
-    default: 'pendiente',
+    enum: ['failed', 'pending', 'paid'],
+    default: 'pending',
   })
-  state_pay!: 'fallido' | 'pendiente' | 'pagado';
+  state_pay!: 'failed' | 'pending' | 'paid';
 
   @CreateDateColumn({ type: 'timestamptz' })
   created_at!: Date;
