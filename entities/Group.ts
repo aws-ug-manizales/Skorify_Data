@@ -9,8 +9,8 @@ import {
   OneToMany,
   Unique,
 } from 'typeorm';
-import { Tournament } from './Tournament';
-import { GroupTeam } from './GroupTeam';
+import type { Tournament } from './Tournament';
+import type { GroupTeam } from './GroupTeam';
 
 @Entity('groups')
 @Unique(['tournament_id', 'group_name'])
@@ -33,10 +33,10 @@ export class Group {
   @Column({ type: 'timestamptz', nullable: true, default: null })
   deleted_at!: Date | null;
 
-  @ManyToOne(() => Tournament, (t) => t.groups, { onDelete: 'CASCADE' })
+  @ManyToOne('Tournament', 'groups', { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'tournament_id' })
   tournament!: Tournament;
 
-  @OneToMany(() => GroupTeam, (gt) => gt.group)
+  @OneToMany('GroupTeam', 'group')
   group_teams!: GroupTeam[];
 }

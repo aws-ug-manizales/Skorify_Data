@@ -5,11 +5,11 @@ import {
   CreateDateColumn,
   OneToMany,
 } from 'typeorm';
-import { TournamentTeam } from './TournamentTeam';
-import { Group } from './Group';
-import { Match } from './Match';
-import { Payment } from './Payment';
-import { Leaderboard } from './Leaderboard';
+import type { TournamentTeam } from './TournamentTeam';
+import type { Group } from './Group';
+import type { Match } from './Match';
+import type { Payment } from './Payment';
+import type { Leaderboard } from './Leaderboard';
 
 @Entity('tournaments')
 export class Tournament {
@@ -28,18 +28,18 @@ export class Tournament {
   @CreateDateColumn({ type: 'timestamptz' })
   created_at!: Date;
 
-  @OneToMany(() => TournamentTeam, (tt) => tt.tournament)
+  @OneToMany('TournamentTeam', 'tournament')
   tournament_teams!: TournamentTeam[];
 
-  @OneToMany(() => Group, (g) => g.tournament)
+  @OneToMany('Group', 'tournament')
   groups!: Group[];
 
-  @OneToMany(() => Match, (m) => m.tournament)
+  @OneToMany('Match', 'tournament')
   matches!: Match[];
 
-  @OneToMany(() => Payment, (p) => p.tournament)
+  @OneToMany('Payment', 'tournament')
   payments!: Payment[];
 
-  @OneToMany(() => Leaderboard, (l) => l.tournament)
+  @OneToMany('Leaderboard', 'tournament')
   leaderboard!: Leaderboard[];
 }

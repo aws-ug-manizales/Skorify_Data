@@ -6,9 +6,9 @@ import {
   UpdateDateColumn,
   OneToMany,
 } from 'typeorm';
-import { TournamentTeam } from './TournamentTeam';
-import { GroupTeam } from './GroupTeam';
-import { Match } from './Match';
+import type { TournamentTeam } from './TournamentTeam';
+import type { GroupTeam } from './GroupTeam';
+import type { Match } from './Match';
 
 @Entity('teams')
 export class Team {
@@ -33,15 +33,15 @@ export class Team {
   @Column({ type: 'timestamptz', nullable: true, default: null })
   deleted_at!: Date | null;
 
-  @OneToMany(() => TournamentTeam, (tt) => tt.team)
+  @OneToMany('TournamentTeam', 'team')
   tournament_teams!: TournamentTeam[];
 
-  @OneToMany(() => GroupTeam, (gt) => gt.team)
+  @OneToMany('GroupTeam', 'team')
   group_teams!: GroupTeam[];
 
-  @OneToMany(() => Match, (m) => m.home_team)
+  @OneToMany('Match', 'home_team')
   home_matches!: Match[];
 
-  @OneToMany(() => Match, (m) => m.away_team)
+  @OneToMany('Match', 'away_team')
   away_matches!: Match[];
 }

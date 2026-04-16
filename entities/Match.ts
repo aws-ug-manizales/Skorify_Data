@@ -8,9 +8,9 @@ import {
   JoinColumn,
   OneToMany,
 } from 'typeorm';
-import { Team } from './Team';
-import { Tournament } from './Tournament';
-import { Prediction } from './Prediction';
+import type { Team } from './Team';
+import type { Tournament } from './Tournament';
+import type { Prediction } from './Prediction';
 
 @Entity('matches')
 export class Match {
@@ -58,18 +58,18 @@ export class Match {
   @UpdateDateColumn({ type: 'timestamptz', nullable: true, default: null })
   updated_at!: Date | null;
 
-  @ManyToOne(() => Team, (t) => t.home_matches, { onDelete: 'CASCADE' })
+  @ManyToOne('Team', 'home_matches', { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'home_team_id' })
   home_team!: Team;
 
-  @ManyToOne(() => Team, (t) => t.away_matches, { onDelete: 'CASCADE' })
+  @ManyToOne('Team', 'away_matches', { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'away_team_id' })
   away_team!: Team;
 
-  @ManyToOne(() => Tournament, (t) => t.matches, { onDelete: 'CASCADE' })
+  @ManyToOne('Tournament', 'matches', { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'tournament_id' })
   tournament!: Tournament;
 
-  @OneToMany(() => Prediction, (p) => p.match)
+  @OneToMany('Prediction', 'match')
   predictions!: Prediction[];
 }

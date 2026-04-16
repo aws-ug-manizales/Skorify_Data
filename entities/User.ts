@@ -6,9 +6,9 @@ import {
   UpdateDateColumn,
   OneToMany,
 } from 'typeorm';
-import { Prediction } from './Prediction';
-import { Payment } from './Payment';
-import { Leaderboard } from './Leaderboard';
+import type { Prediction } from './Prediction';
+import type { Payment } from './Payment';
+import type { Leaderboard } from './Leaderboard';
 
 @Entity('users')
 export class User {
@@ -36,12 +36,12 @@ export class User {
   @Column({ type: 'timestamptz', nullable: true, default: null })
   deleted_at!: Date | null;
 
-  @OneToMany(() => Prediction, (p) => p.user)
+  @OneToMany('Prediction', 'user')
   predictions!: Prediction[];
 
-  @OneToMany(() => Payment, (p) => p.user)
+  @OneToMany('Payment', 'user')
   payments!: Payment[];
 
-  @OneToMany(() => Leaderboard, (l) => l.user)
+  @OneToMany('Leaderboard', 'user')
   leaderboard!: Leaderboard[];
 }

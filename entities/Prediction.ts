@@ -8,8 +8,8 @@ import {
   JoinColumn,
   Unique,
 } from 'typeorm';
-import { User } from './User';
-import { Match } from './Match';
+import type { User } from './User';
+import type { Match } from './Match';
 
 @Entity('predictions')
 @Unique(['user_id', 'match_id'])
@@ -41,11 +41,11 @@ export class Prediction {
   @Column({ type: 'timestamptz', nullable: true, default: null })
   deleted_at!: Date | null;
 
-  @ManyToOne(() => User, (u) => u.predictions, { onDelete: 'CASCADE' })
+  @ManyToOne('User', 'predictions', { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'user_id' })
   user!: User;
 
-  @ManyToOne(() => Match, (m) => m.predictions, { onDelete: 'CASCADE' })
+  @ManyToOne('Match', 'predictions', { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'match_id' })
   match!: Match;
 }
