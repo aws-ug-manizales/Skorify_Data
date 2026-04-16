@@ -1,6 +1,6 @@
 {
   "name": "skorifydata",
-  "version": "1.0.0",
+  "version": "1.0.0-beta",
   "description": "SkorifyData - Polla Mundial migrations",
   "packageManager": "pnpm@10.33.0",
   "main": "dist/lib/index.js",
