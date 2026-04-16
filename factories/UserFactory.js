@@ -9,11 +9,14 @@ const db = knex(config);
  * @property {string}  [email]
  * @property {string}  [password_hash]
  * @property {string}  [avatar_url]
+ * @property {string}  [role]            - general | global | instance
  */
 
 const TABLE = 'users';
 
 let counter = 0;
+
+const ROLES = ['general', 'global', 'instance'];
 
 /**
  * Builds default user attributes merged with overrides.
@@ -27,6 +30,7 @@ function build(overrides = {}) {
     email: `user${counter}@test.com`,
     password_hash: 'hashed_password',
     avatar_url: null,
+    role: ROLES[Math.floor(Math.random() * ROLES.length)],
     ...overrides,
   };
 }

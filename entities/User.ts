@@ -6,42 +6,56 @@ import {
   UpdateDateColumn,
   OneToMany,
 } from 'typeorm';
-import { Prediction } from './Prediction';
-import { Payment } from './Payment';
-import { Leaderboard } from './Leaderboard';
+import type { Payment } from './Payment';
+import type { Leaderboard } from './Leaderboard';
+import type { Instance } from './Instance';
+import type { InstanceUser } from './InstanceUser';
 
 @Entity('users')
 export class User {
   @PrimaryGeneratedColumn('uuid')
-  id: string;
+  id!: string;
 
   @Column({ type: 'varchar' })
-  name: string;
+  name!: string;
 
   @Column({ type: 'varchar', unique: true })
-  email: string;
+  email!: string;
 
   @Column({ type: 'varchar' })
-  password_hash: string;
+  password_hash!: string;
 
   @Column({ type: 'varchar', nullable: true })
-  avatar_url: string | null;
+  avatar_url!: string | null;
+
+  @Column({
+    type: 'enum',
+    enum: ['general', 'global', 'instance'],
+    default: 'general',
+  })
+  role!: 'general' | 'global' | 'instance';
 
   @CreateDateColumn({ type: 'timestamptz' })
-  created_at: Date;
+  created_at!: Date;
 
   @UpdateDateColumn({ type: 'timestamptz', nullable: true, default: null })
-  updated_at: Date | null;
+  updated_at!: Date | null;
 
   @Column({ type: 'timestamptz', nullable: true, default: null })
-  deleted_at: Date | null;
+  deleted_at!: Date | null;
 
-  @OneToMany(() => Prediction, (p) => p.user)
-  predictions: Prediction[];
+  @OneToMany('Payment', 'user')
+  payments!: Payment[];
 
-  @OneToMany(() => Payment, (p) => p.user)
-  payments: Payment[];
+  @OneToMany('Leaderboard', 'user')
+  leaderboard!: Leaderboard[];
 
-  @OneToMany(() => Leaderboard, (l) => l.user)
-  leaderboard: Leaderboard[];
+  @OneToMany('Instance', 'owner')
+  owned_instances!: Instance[];
+
+  @OneToMany('Instance', 'validator')
+  validated_instances!: Instance[];
+
+  @OneToMany('InstanceUser', 'player')
+  instance_users!: InstanceUser[];
 }
