@@ -2,17 +2,28 @@
   "name": "skorifydata",
   "version": "1.0.0",
   "description": "SkorifyData - Polla Mundial migrations",
+  "packageManager": "pnpm@10.33.0",
   "main": "dist/lib/index.js",
   "types": "dist/lib/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "exports": {
+    ".": {
+      "types": "./dist/lib/index.d.ts",
+      "default": "./dist/lib/index.js"
+    }
+  },
   "scripts": {
-    "build": "tsc",
+    "build": "tsc -p tsconfig.json",
     "db:up": "docker compose up -d --wait postgres",
     "db:down": "docker compose down",
-    "migrate": "docker compose run --rm --no-deps knex",
+    "migrate": "docker compose run --rm --no-deps -e KNEX_COMMAND=migrate:latest knex",
     "status": "docker compose run --rm --no-deps -e KNEX_COMMAND=migrate:status knex",
     "rollback": "docker compose run --rm --no-deps -e KNEX_COMMAND=migrate:rollback knex",
-    "setup": "npm run db:up && npm run migrate",
-    "verify": "npm run status",
+    "setup": "pnpm run db:up && pnpm run migrate",
+    "verify": "pnpm run status",
+    "prepack": "pnpm run build",
     "seed": "node seeders/initial_seed.js"
   },
   "keywords": [],

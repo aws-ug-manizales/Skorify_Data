@@ -1,2 +1,2 @@
 export * from './DBClient';
-export * from '../entities/User';
+export * from '../entities';
