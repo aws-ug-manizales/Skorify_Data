@@ -194,83 +194,18 @@ Levantas PostgreSQL → Espera a estar listo → Ejecutas Knex → Se crean tabl
 
 ## Onboarding de equipo (paso a paso)
 
-1. Instalar dependencias de Node (opcional si usaras solo migraciones dockerizadas):
+1. **Configurar el entorno:**
+   Copia el archivo de ejemplo para crear tu configuración local:
+   ```bash
+   cp .env.example .env
 
-```bash
-npm ci
-```
+2. levantar el proyecto:
+	docker compose up --build
 
-2. Crear entorno local y completar con los siguientes datos:
+3. verificar el estado
+	abre otra terminal y ejecuta el siguiente comando
+	docker exec -it skorify_db psql -U postgres -d polla_mundial -c "\dt"
 
-```bash
-DB_HOST=postgres
-DB_PORT=5432
-DB_NAME=
-DB_USER=
-DB_PASSWORD=
-```
-## Forma corta
-```bash
-    docker compose up -d
-    npx knex migrate:up
-    npm run seed
-```
-
-3. Levantar PostgreSQL:
-
-```bash
-npm run db:up
-```
-Esto hace:
-- Crea contenedor skorify_db
-- Expone puerto 5432
-- Espera a que la DB esté lista (healthcheck)
-
-4. Aplicar migraciones:
-
-```bash
-npm run migrate
-```
-Esto hace:
-- Levanta contenedor temporal knex
-- Ejecuta:
-
-```bash
-npx knex migrate:latest
-```
-- Para crear todas las tablas
-
-## Verificar que TODO funciona
-
-```bash
-docker exec -it skorify_db psql -U postgres -d polla_mundial -c "\dt"
-```
-Si todo sale bien, verás las tablas en tu pestaña de logs
-
-## Scripts disponibles
-
-``` bash
-# Levanta SOLO PostgreSQL
-npm run db:up
-
-# Elimina contenedores y red
-npm run db:down
-
-# Ejecuta migraciones (crea tablas)
-npm run migrate
-
-# Ver estado de migraciones
-npm run status
-
-# Revierte última migración
-npm run rollback
-
-# Flujo completo (lo que deberías usar)
-npm run setup
-
-# Alias de status
-npm run verify
-```
 
 ## Instalar la librería desde GitHub
 

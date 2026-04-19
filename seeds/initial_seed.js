@@ -55,7 +55,7 @@ async function run() {
   console.log('\nSeeding complete!');
 }
 
-run()
+/*run()
   .catch((err) => {
     console.error('Seeding failed:', err);
     process.exit(1);
@@ -66,4 +66,6 @@ run()
     TournamentFactory.db.destroy();
     InstanceFactory.db.destroy();
     InstanceUserFactory.db.destroy();
-  });
+  });*/
+
+exports.seed = run;
