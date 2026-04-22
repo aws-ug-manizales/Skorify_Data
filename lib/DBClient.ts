@@ -15,6 +15,7 @@ import { Tournament } from "../entities/Tournament";
 import { TournamentTeam } from "../entities/TournamentTeam";
 import { User } from "../entities/User";
 import { UserService } from "./services/User.service";
+import { MatchService } from "./services/Match.service";
 
 const DEFAULT_ENTITIES = [
     User,
@@ -35,6 +36,7 @@ const DEFAULT_ENTITIES = [
 
 export class DBClient {
     public readonly users: UserService;
+    public readonly matches: MatchService;
     private readonly dataSource: DataSource;
 
     constructor(options: DataSourceOptions) {
@@ -43,6 +45,7 @@ export class DBClient {
             entities: options.entities ?? DEFAULT_ENTITIES,
         });
         this.users = new UserService(this.dataSource.getRepository(User));
+        this.matches = new MatchService(this.dataSource.getRepository(Match));
     }
 
     async connect() {
