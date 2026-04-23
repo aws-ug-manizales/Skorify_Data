@@ -1,6 +1,8 @@
 const knex = require('knex');
 const config = require('../knexfile');
 const { UserFactory, TournamentFactory, InstanceFactory, InstanceUserFactory } = require('../factories');
+const teamSeed = require('./teams_seed');
+const matchSeed = require('./matches_seed');
 
 const db = knex(config);
 
@@ -53,6 +55,9 @@ async function run() {
   playersToAdd.forEach((u) => console.log(`   - ${u.name} (${u.email})`));
 
   console.log('\nSeeding complete!');
+  // Seed teams and matches
+  await teamSeed.run(db);
+  await matchSeed.run(db);
 }
 
 run()
@@ -66,4 +71,6 @@ run()
     TournamentFactory.db.destroy();
     InstanceFactory.db.destroy();
     InstanceUserFactory.db.destroy();
+    teamSeed.destroy();
+    matchSeed.destroy();
   });

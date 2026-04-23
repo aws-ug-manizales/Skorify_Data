@@ -12,11 +12,11 @@ const db = knex(config);
  * @property {string}  [role]            - general | global | instance
  */
 
-const TABLE = 'users';
+const TABLE = 'matches';
 
 let counter = 0;
 
-const ROLES = ['general', 'global', 'instance'];
+const STATUS = ['scheduled', 'in_progress', 'finished'];
 
 /**
  * Builds default user attributes merged with overrides.
@@ -25,13 +25,14 @@ const ROLES = ['general', 'global', 'instance'];
  */
 function build(overrides = {}) {
   counter++;
-  const timeStamp = Date.now();
   return {
-    name: `User ${counter}_${timeStamp}`,
-    email: `user${counter}_${timeStamp}@test.com`,
-    password_hash: 'hashed_password',
-    avatar_url: null,
-    role: ROLES[Math.floor(Math.random() * ROLES.length)],
+    home_team_id: null,
+    away_team_id: null,
+    tournament_id: null,
+    kick_off: new Date(),
+    home_goals: null,
+    away_goals: null,
+    status: STATUS[Math.floor(Math.random() * STATUS.length)],
     ...overrides,
   };
 }
@@ -42,8 +43,8 @@ function build(overrides = {}) {
  * @returns {Promise<Object>}
  */
 async function create(overrides = {}) {
-  const [user] = await db(TABLE).insert(build(overrides)).returning('*');
-  return user;
+  const [match] = await db(TABLE).insert(build(overrides)).returning('*');
+  return match;
 }
 
 /**
@@ -53,13 +54,12 @@ async function create(overrides = {}) {
  * @returns {Promise<Object[]>}
  */
 async function createMany(count, overrides = {}) {
-  const timeStamp = Date.now();
-  const users = Array.from({ length: count }, (_, i) =>
-    build({ ...overrides, email: overrides.email || `user${counter + i + 1}_${timeStamp}@test.com` })
+  const matches = Array.from({ length: count }, (_, i) =>
+    build({ ...overrides })
   );
   // fix counter after batch build
   counter += count;
-  return db(TABLE).insert(users).returning('*');
+  return db(TABLE).insert(matches).returning('*');
 }
 
 /**
