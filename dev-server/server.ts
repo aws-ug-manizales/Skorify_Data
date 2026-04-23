@@ -1,6 +1,7 @@
 import express from "express";
 import type { Request, Response } from "express";
 import { DBClient } from "skorifydata";
+import type { Match } from "skorifydata";
 
 const app = express();
 app.use(express.json());
@@ -43,6 +44,71 @@ app.get("/users", async (_req: Request, res: Response) => {
     await dbClient.connect();
     const users = await dbClient.users.findAllActive();
     return res.json({ ok: true, users });
+  } finally {
+    await dbClient.disconnect();
+  }
+});
+
+app.get("/matches", async (_req: Request, res: Response) => {
+  const dbClient = new DBClient({
+    type: "postgres",
+    host: process.env.DB_HOST || "localhost",
+    port: Number(process.env.DB_PORT || 5432),
+    database: process.env.DB_NAME || "polla_mundial",
+    username: process.env.DB_USER || "postgres",
+    password: process.env.DB_PASSWORD || "password",
+  });
+
+  try {
+    await dbClient.connect();
+    const matches = await dbClient.matches.findAllActive();
+    return res.json({ ok: true, matches });
+  } finally {
+    await dbClient.disconnect();
+  }
+});
+
+app.post("/matches", async (req: Request, res: Response) => {
+  const dbClient = new DBClient({
+    type: "postgres",
+    host: process.env.DB_HOST || "localhost",
+    port: Number(process.env.DB_PORT || 5432),
+    database: process.env.DB_NAME || "polla_mundial",
+    username: process.env.DB_USER || "postgres",
+    password: process.env.DB_PASSWORD || "password",
+  });
+
+  try {
+    await dbClient.connect();
+    console.log("Created new match:", req.body);
+    const newMatch: Match = await dbClient.matches.create(req.body);
+    return res.status(201).json({ ok: true, match: newMatch });
+  } catch (error) {
+    console.error("Error creating match:", error);
+    return res.status(500).json({ ok: false, error: "Failed to create match" });
+  } finally {
+    await dbClient.disconnect();
+  }
+});
+
+app.delete("/matches/:id", async (req: Request, res: Response) => {
+  const { id } = req.params;
+  const dbClient = new DBClient({
+    type: "postgres",
+    host: process.env.DB_HOST || "localhost",
+    port: Number(process.env.DB_PORT || 5432),
+    database: process.env.DB_NAME || "polla_mundial",
+    username: process.env.DB_USER || "postgres",
+    password: process.env.DB_PASSWORD || "password",
+  });
+
+  try {
+    await dbClient.connect();
+    await dbClient.matches.finish(id as string);
+    return res.json({ ok: true, message: `Match with id ${id} marked as finished` });
+  } catch (error) {
+    console.error(`Error finishing match with id ${id}:`, error);
+    return res.status(500).json({ ok: false, error: "Failed to finish match" });
   } finally {
     await dbClient.disconnect();
   }
