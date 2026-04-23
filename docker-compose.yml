@@ -42,6 +42,7 @@ services:
   dev-server:
     image: node:24-alpine
     container_name: dev-server
+    profiles: ['dev']
     restart: unless-stopped
     working_dir: /workspace
     ports:
