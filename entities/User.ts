@@ -6,23 +6,23 @@ import {
   UpdateDateColumn,
   OneToMany,
 } from 'typeorm';
-import type { Payment } from './Payment';
-import type { Leaderboard } from './Leaderboard';
-import type { Instance } from './Instance';
-import type { InstanceUser } from './InstanceUser';
+import { Payment } from './Payment';
+import { Leaderboard } from './Leaderboard';
+import { Instance } from './Instance';
+import { InstanceUser } from './InstanceUser';
 
 @Entity('users')
 export class User {
   @PrimaryGeneratedColumn('uuid')
   id!: string;
 
-  @Column({ type: 'varchar' })
+  @Column({ type: 'varchar', length: 150 })
   name!: string;
 
-  @Column({ type: 'varchar', unique: true })
+  @Column({ type: 'varchar', unique: true, length: 255 })
   email!: string;
 
-  @Column({ type: 'varchar' })
+  @Column({ type: 'varchar', select: false }) // 'select: false' por seguridad, no trae el hash a menos que se pida explícitamente
   password_hash!: string;
 
   @Column({ type: 'varchar', nullable: true })
@@ -44,18 +44,19 @@ export class User {
   @Column({ type: 'timestamptz', nullable: true, default: null })
   deleted_at!: Date | null;
 
-  @OneToMany('Payment', 'user')
+  // Relaciones
+  @OneToMany(() => Payment, (payment) => payment.user)
   payments!: Payment[];
 
-  @OneToMany('Leaderboard', 'user')
+  @OneToMany(() => Leaderboard, (leaderboard) => leaderboard.user)
   leaderboard!: Leaderboard[];
 
-  @OneToMany('Instance', 'owner')
+  @OneToMany(() => Instance, (instance) => instance.owner)
   owned_instances!: Instance[];
 
-  @OneToMany('Instance', 'validator')
+  @OneToMany(() => Instance, (instance) => instance.validator)
   validated_instances!: Instance[];
 
-  @OneToMany('InstanceUser', 'player')
+  @OneToMany(() => InstanceUser, (instanceUser) => instanceUser.player)
   instance_users!: InstanceUser[];
 }
