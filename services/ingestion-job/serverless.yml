@@ -1,0 +1,30 @@
+service: skorify-ingestion-job
+provider:
+  name: aws
+  runtime: nodejs18.x
+  region: us-east-1
+
+functions:
+  extractor:
+    handler: handler.extractor
+    events:
+      - schedule: rate(15 minutes) # Criterio: Cron cada 15 min
+
+  processor:
+    handler: handler.processor
+    events:
+      - sqs:
+          arn:
+            Fn::GetAtt: [IngestionQueue, Arn]
+          batchSize: 1
+
+resources:
+  Resources:
+    IngestionQueue:
+      Type: "AWS::SQS::Queue"
+      Properties:
+        QueueName: "skorify-matches-queue"
+    IngestionDLQ: # Criterio: Dead Letter Queue
+      Type: "AWS::SQS::Queue"
+      Properties:
+        QueueName: "skorify-matches-dlq"
