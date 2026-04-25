@@ -107,6 +107,34 @@ npm run setup
 npm run verify
 ```
 
+## Instalar la librería desde GitHub
+
+Si quieres consumir esta librería en otro proyecto TypeScript sin publicarla a npm, puedes instalarla directo desde el repositorio.
+
+1. Requisito: usar una referencia estable (tag o commit SHA) para evitar cambios inesperados.
+
+2. Instalar con `pnpm`:
+
+```bash
+pnpm add "git+https://github.com/<org>/<repo>.git#<tag-o-sha>"
+```
+
+Ejemplo:
+
+```bash
+pnpm add "git+https://github.com/skorify/skorify-data.git#v1.0.0"
+```
+
+3. Si el repositorio es privado, usa SSH:
+
+```bash
+pnpm add "git+ssh://git@github.com/<org>/<repo>.git#<tag-o-sha>"
+```
+
+Notas importantes:
+- Esta librería compila el código TypeScript durante el empaquetado (`prepack`), por lo que no necesitas versionar `dist` en el repositorio.
+- Para producción, fija siempre una versión (`tag`) o un commit SHA en lugar de `main`.
+
 ## En caso de romperlo todo
 ```bash
 docker compose down -v

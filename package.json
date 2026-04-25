@@ -1,22 +1,44 @@
 {
   "name": "skorifydata",
-  "version": "1.0.0",
+  "version": "1.0.0-beta",
   "description": "SkorifyData - Polla Mundial migrations",
-  "main": "index.js",
+  "packageManager": "pnpm@10.33.0",
+  "main": "dist/lib/index.js",
+  "types": "dist/lib/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "exports": {
+    ".": {
+      "types": "./dist/lib/index.d.ts",
+      "default": "./dist/lib/index.js"
+    }
+  },
   "scripts": {
+    "build": "tsc -p tsconfig.json",
     "db:up": "docker compose up -d --wait postgres",
     "db:down": "docker compose down",
-    "migrate": "docker compose run --rm --no-deps knex",
+    "migrate": "docker compose run --rm --no-deps -e KNEX_COMMAND=migrate:latest knex",
     "status": "docker compose run --rm --no-deps -e KNEX_COMMAND=migrate:status knex",
     "rollback": "docker compose run --rm --no-deps -e KNEX_COMMAND=migrate:rollback knex",
-    "setup": "npm run db:up && npm run migrate",
-    "verify": "npm run status",
+    "setup": "pnpm run db:up && pnpm run migrate",
+    "verify": "pnpm run status",
+    "prepack": "npm run build",
     "seed": "node seeders/initial_seed.js"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
+  "devDependencies": {
+    "@types/node": "^25.5.2",
+    "ts-node": "^10.9.2",
+    "typescript": "^6.0.2"
+  },
   "dependencies": {
+    "class-transformer": "^0.5.1",
+    "class-validator": "^0.15.1",
+    "reflect-metadata": "^0.2.2",
+    "typeorm": "^0.3.28",
     "knex": "^3.2.9",
     "pg": "^8.20.0"
   }

@@ -1,0 +1,22 @@
+{
+  "name": "skorifydata-dev-instance",
+  "private": true,
+  "version": "0.0.0",
+  "description": "Local dev instance to test the compiled skorifydata package.",
+  "packageManager": "pnpm@10.33.0",
+  "main": "server.ts",
+  "scripts": {
+    "dev": "tsx watch server.ts",
+    "start": "tsx server.ts"
+  },
+  "dependencies": {
+    "express": "^5.1.0",
+    "skorifydata": "github:aws-ug-manizales/Skorify_Data#v1.0.0-beta.2"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.3",
+    "@types/node": "^24.6.0",
+    "tsx": "^4.20.6",
+    "typescript": "^5.9.3"
+  }
+}

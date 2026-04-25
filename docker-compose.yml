@@ -39,6 +39,25 @@ services:
       - ./:/workspace
       - knex_node_modules:/workspace/node_modules
 
+  dev-server:
+    image: node:24-alpine
+    container_name: dev-server
+    restart: unless-stopped
+    working_dir: /workspace
+    ports:
+      - '${DEV_server_PORT:-3000}:3000'
+    depends_on:
+      postgres:
+        condition: service_healthy
+    entrypoint:
+      - sh
+      - -lc
+      - cd dev-server && npm ci --no-audit --no-fund && npm run dev
+    volumes:
+      - ./:/workspace
+      - dev-server-node_modules:/workspace/node_modules
+
 volumes:
   pgdata:
   knex_node_modules:
+  dev-server-node_modules:
