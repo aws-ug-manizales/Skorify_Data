@@ -1,4 +1,4 @@
-import { TimeService } from "../services/time.service";
+import { TimeService } from "./time.service";
 
 export class PredictionRules {
   // Convención: Las constantes de configuración se definen al inicio
