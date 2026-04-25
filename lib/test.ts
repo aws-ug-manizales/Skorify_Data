@@ -1,4 +1,4 @@
-import { PredictionRules } from "./prediction.rules";
+import { PredictionRules } from "./rules/prediction.rules";
 
 /**
  * Suite de pruebas para validar la lógica de predicciones
