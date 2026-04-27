@@ -1,13 +1,46 @@
 import { validateOrReject, ValidationError } from "class-validator";
 import { plainToInstance } from "class-transformer";
+import { DeepPartial, FindOptionsWhere, In, Repository } from "typeorm";
 
-export abstract class BaseDataService<T extends object> {
-    constructor(private entityClass: new () => T) {}
+export abstract class BaseDataService<T extends { id: string }> {
+    constructor(
+        private entityClass: new () => T,
+        protected readonly repository: Repository<T>
+    ) {}
 
-    /**
-     * Validates that incoming data matches class-validator rules.
-     * Throws a detailed error when validation fails.
-     */
+    async create(data: Partial<T>): Promise<T> {
+        await this.validateSchema(data);
+        const newEntity = this.repository.create(data as DeepPartial<T>);
+        return await this.repository.save(newEntity);
+    }
+
+    async getById(id: string): Promise<T | null> {
+        return await this.repository.findOne({
+            where: { id } as FindOptionsWhere<T>,
+        });
+    }
+
+    async getAll(): Promise<T[]> {
+        return await this.repository.find();
+    }
+
+    async getByIDs(ids: string[]): Promise<T[]> {
+        return await this.repository.find({
+            where: { id: In(ids) } as FindOptionsWhere<T>,
+        });
+    }
+
+    async modifyById(id: string, data: Partial<T>): Promise<T> {
+        await this.repository.update(id, data as any);
+        const updated = await this.getById(id);
+        if (!updated) throw new Error(`Entity with id ${id} not found`);
+        return updated;
+    }
+
+    async deleteById(id: string): Promise<void> {
+        await this.repository.delete(id);
+    }
+
     protected async validateSchema(data: Partial<T>): Promise<void> {
         const entityInstance = plainToInstance(this.entityClass, data);
 
@@ -23,7 +56,7 @@ export abstract class BaseDataService<T extends object> {
     }
 
     private formatErrors(errors: ValidationError[]): string[] {
-        return errors.map((err) => 
+        return errors.map((err) =>
             Object.values(err.constraints || {}).join(", ")
         );
     }
