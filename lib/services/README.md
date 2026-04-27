@@ -22,9 +22,9 @@ All services extend `BaseDataService<T>`, which provides common CRUD operations 
 | Hook | Default behaviour | When to override |
 |---|---|---|
 | `validateData(data)` | Runs `validateSchema` (class-validator) | Replace or extend schema validation |
-| `validateRule(data)` | No-op | Enforce business rules (e.g. uniqueness, state machines, cross-entity constraints) |
+| `validateRules(data)` | No-op | Enforce business rules (e.g. uniqueness, state machines, cross-entity constraints) |
 
-Call order: `validateData` → `validateRule` → write.
+Call order: `validateData` → `validateRules` → write.
 
 ```ts
 export class MatchService extends BaseDataService<MatchEntity> {
@@ -41,7 +41,7 @@ export class MatchService extends BaseDataService<MatchEntity> {
     }
 
     // Pure business rule — no schema involved
-    protected async validateRule(data: Partial<MatchEntity>): Promise<void> {
+    protected async validateRules(data: Partial<MatchEntity>): Promise<void> {
         const conflict = await this.repository.findOne({
             where: { home_team_id: data.home_team_id, status: "scheduled" },
         });
@@ -115,5 +115,5 @@ export class MyEntityService extends BaseDataService<MyEntity> {
 ## Rules
 
 - Every entity must have `id: string` (`@PrimaryGeneratedColumn('uuid')`) — this is enforced by the `T extends { id: string }` constraint on the base class.
-- Schema validation lives on the entity class via `class-validator` decorators and runs automatically through `validateData`. Business rules belong in `validateRule`.
+- Schema validation lives on the entity class via `class-validator` decorators and runs automatically through `validateData`. Business rules belong in `validateRules`.
 - Do not inject the repository anywhere other than the constructor — always pass it to `super`.
