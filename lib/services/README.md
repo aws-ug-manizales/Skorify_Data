@@ -15,6 +15,41 @@ All services extend `BaseDataService<T>`, which provides common CRUD operations 
 
 `protected repository` and `protected validateSchema` are also available inside the subclass.
 
+## Lifecycle hooks
+
+`create` and `modifyById` call two hooks before writing to the database. Both are no-ops by default and can be overridden independently.
+
+| Hook | Default behaviour | When to override |
+|---|---|---|
+| `validateData(data)` | Runs `validateSchema` (class-validator) | Replace or extend schema validation |
+| `validateRule(data)` | No-op | Enforce business rules (e.g. uniqueness, state machines, cross-entity constraints) |
+
+Call order: `validateData` → `validateRule` → write.
+
+```ts
+export class MatchService extends BaseDataService<MatchEntity> {
+    constructor(repository: Repository<MatchEntity>) {
+        super(MatchEntity, repository);
+    }
+
+    // Extend schema validation — still runs class-validator, then adds a custom check
+    protected async validateData(data: Partial<MatchEntity>): Promise<void> {
+        await super.validateData(data);
+        if (data.start_date && data.end_date && data.start_date >= data.end_date) {
+            throw new Error("start_date must be before end_date");
+        }
+    }
+
+    // Pure business rule — no schema involved
+    protected async validateRule(data: Partial<MatchEntity>): Promise<void> {
+        const conflict = await this.repository.findOne({
+            where: { home_team_id: data.home_team_id, status: "scheduled" },
+        });
+        if (conflict) throw new Error("Team already has a scheduled match");
+    }
+}
+```
+
 ---
 
 ## Creating a new service
@@ -80,5 +115,5 @@ export class MyEntityService extends BaseDataService<MyEntity> {
 ## Rules
 
 - Every entity must have `id: string` (`@PrimaryGeneratedColumn('uuid')`) — this is enforced by the `T extends { id: string }` constraint on the base class.
-- Validation rules live on the entity class using `class-validator` decorators. `create` and `modifyById` run `validateSchema` automatically.
+- Schema validation lives on the entity class via `class-validator` decorators and runs automatically through `validateData`. Business rules belong in `validateRule`.
 - Do not inject the repository anywhere other than the constructor — always pass it to `super`.

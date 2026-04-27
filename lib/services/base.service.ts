@@ -9,7 +9,8 @@ export abstract class BaseDataService<T extends { id: string }> {
     ) {}
 
     async create(data: Partial<T>): Promise<T> {
-        await this.validateSchema(data);
+        await this.validateData(data);
+        await this.validateRule(data);
         const newEntity = this.repository.create(data as DeepPartial<T>);
         return await this.repository.save(newEntity);
     }
@@ -31,6 +32,8 @@ export abstract class BaseDataService<T extends { id: string }> {
     }
 
     async modifyById(id: string, data: Partial<T>): Promise<T> {
+        await this.validateData(data);
+        await this.validateRule(data);
         await this.repository.update(id, data as any);
         const updated = await this.getById(id);
         if (!updated) throw new Error(`Entity with id ${id} not found`);
@@ -40,6 +43,13 @@ export abstract class BaseDataService<T extends { id: string }> {
     async deleteById(id: string): Promise<void> {
         await this.repository.delete(id);
     }
+
+    protected async validateData(data: Partial<T>): Promise<void> {
+        await this.validateSchema(data);
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    protected async validateRule(_data: Partial<T>): Promise<void> {}
 
     protected async validateSchema(data: Partial<T>): Promise<void> {
         const entityInstance = plainToInstance(this.entityClass, data);
