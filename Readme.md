@@ -300,6 +300,27 @@ Notas importantes:
 - Esta librería compila el código TypeScript durante el empaquetado (`prepack`), por lo que no necesitas versionar `dist` en el repositorio.
 - Para producción, fija siempre una versión (`tag`) o un commit SHA en lugar de `main`.
 
+## Entidades expuestas como servicios
+
+La librería expone progresivamente cada entidad como un servicio que extiende `BaseDataService<T>` (ver [lib/services/README.md](lib/services/README.md) para el detalle de la API base y cómo crear uno nuevo).
+
+| Entidad | Archivo de entidad | Servicio | Estado |
+|---|---|---|---|
+| User | [entities/User.ts](entities/User.ts) | [lib/services/User.service.ts](lib/services/User.service.ts) | Disponible |
+| Match | [entities/Match.ts](entities/Match.ts) | [lib/services/Match.service.ts](lib/services/Match.service.ts) | Disponible |
+| Tournament | [entities/Tournament.ts](entities/Tournament.ts) | — | Pendiente |
+| Team | [entities/Team.ts](entities/Team.ts) | — | Pendiente |
+| TournamentTeam | [entities/TournamentTeam.ts](entities/TournamentTeam.ts) | — | Pendiente |
+| Group | [entities/Group.ts](entities/Group.ts) | — | Pendiente |
+| GroupTeam | [entities/GroupTeam.ts](entities/GroupTeam.ts) | — | Pendiente |
+| Prediction | [entities/Prediction.ts](entities/Prediction.ts) | — | Pendiente |
+| Payment | [entities/Payment.ts](entities/Payment.ts) | — | Pendiente |
+| Leaderboard | [entities/Leaderboard.ts](entities/Leaderboard.ts) | — | Pendiente |
+| Rule | [entities/Rule.ts](entities/Rule.ts) | — | Pendiente |
+| Instance | [entities/Instance.ts](entities/Instance.ts) | — | Pendiente |
+| InstanceUser | [entities/InstanceUser.ts](entities/InstanceUser.ts) | — | Pendiente |
+| InstanceRule | [entities/InstanceRule.ts](entities/InstanceRule.ts) | — | Pendiente |
+
 ## En caso de romperlo todo
 ```bash
 docker compose down -v
