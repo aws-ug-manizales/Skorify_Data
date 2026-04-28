@@ -7,6 +7,7 @@ import {
   ManyToOne,
   JoinColumn,
   OneToMany,
+  Check,
 } from 'typeorm';
 import { IsUUID, IsOptional, IsIn, IsInt } from 'class-validator';
 import type { Team } from './Team';
@@ -14,6 +15,8 @@ import type { Tournament } from './Tournament';
 import type { Prediction } from './Prediction';
 
 @Entity('matches')
+@Check(`"home_team_id" <> "away_team_id"`) 
+@Check(`"home_goals" >= 0 AND "away_goals" >= 0`)
 export class Match {
   @PrimaryGeneratedColumn('uuid')
   @IsOptional()
