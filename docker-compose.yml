@@ -19,7 +19,7 @@ services:
 
   knex:
     image: node:24-alpine
-    profiles: ['tools']
+    container_name: skorify_setup
     working_dir: /workspace
     depends_on:
       postgres:
@@ -27,14 +27,17 @@ services:
     environment:
       DB_HOST: postgres
       DB_PORT: 5432
-      DB_NAME: ${DB_NAME}
-      DB_USER: ${DB_USER}
-      DB_PASSWORD: ${DB_PASSWORD}
-      KNEX_COMMAND: ${KNEX_COMMAND}
+      DB_NAME: ${DB_NAME:-polla_mundial}
+      DB_USER: ${DB_USER:-postgres}
+      DB_PASSWORD: ${DB_PASSWORD:-password}
     entrypoint:
       - sh
-      - -lc
-      - npm ci --no-audit --no-fund && npx knex $${KNEX_COMMAND}
+      - -c
+      - |
+        set -e
+        npm ci --no-audit --no-fund
+        npx knex migrate:latest
+        # Se eliminó la línea de npx knex seed:run
     volumes:
       - ./:/workspace
       - knex_node_modules:/workspace/node_modules
@@ -42,7 +45,6 @@ services:
   dev-server:
     image: node:24-alpine
     container_name: dev-server
-    profiles: ['dev']
     restart: unless-stopped
     working_dir: /workspace
     ports:
@@ -50,14 +52,17 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+      knex:
+        condition: service_started # CAMBIADO: De 'completed_successfully' a 'started'
     entrypoint:
       - sh
-      - -lc
-      - cd dev-server && npm ci --no-audit --no-fund && npm run dev
+      - -c
+      - |
+        # cd dev-server && npm ci --no-audit --no-fund && npm run dev
+        # (Asegúrate de que la ruta 'cd dev-server' sea la correcta según tu main actual)
     volumes:
       - ./:/workspace
       - dev-server-node_modules:/workspace/node_modules
-
 volumes:
   pgdata:
   knex_node_modules:

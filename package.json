@@ -37,9 +37,9 @@
   "dependencies": {
     "class-transformer": "^0.5.1",
     "class-validator": "^0.15.1",
-    "reflect-metadata": "^0.2.2",
-    "typeorm": "^0.3.28",
     "knex": "^3.2.9",
-    "pg": "^8.20.0"
+    "pg": "^8.20.0",
+    "reflect-metadata": "^0.2.2",
+    "typeorm": "^0.3.28"
   }
 }

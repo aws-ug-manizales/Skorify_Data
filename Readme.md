@@ -194,51 +194,30 @@ Levantas PostgreSQL → Espera a estar listo → Ejecutas Knex → Se crean tabl
 
 ## Onboarding de equipo (paso a paso)
 
-1. Instalar dependencias de Node (opcional si usaras solo migraciones dockerizadas):
 
-```bash
-npm ci
-```
-
-2. Crear entorno local y completar con los siguientes datos:
+1. Variables de Entorno
 
 ```bash
 DB_HOST=postgres
 DB_PORT=5432
-DB_NAME=
-DB_USER=
-DB_PASSWORD=
-```
-## Forma corta
-```bash
-    docker compose up -d
-    npx knex migrate:up
-    npm run seed
+DB_NAME=polla_mundial
+DB_USER=postgres
+DB_PASSWORD=password
 ```
 
-3. Levantar PostgreSQL:
+2. Levantamiento Automático 
 
 ```bash
-npm run db:up
+docker compose up --build
 ```
 Esto hace:
-- Crea contenedor skorify_db
-- Expone puerto 5432
-- Espera a que la DB esté lista (healthcheck)
+- Crea el contenedor skorify_db y espera a que esté listo (healthcheck).
 
-4. Aplicar migraciones:
+- Ejecuta automáticamente knex migrate:latest para crear las tablas.
 
-```bash
-npm run migrate
-```
-Esto hace:
-- Levanta contenedor temporal knex
-- Ejecuta:
+- Inicia el dev-server una vez que la base de datos está preparada.
 
-```bash
-npx knex migrate:latest
-```
-- Para crear todas las tablas
+
 
 ## Verificar que TODO funciona
 
