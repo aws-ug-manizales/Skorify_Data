@@ -15,4 +15,11 @@ const destroy = async () => {
   await TeamFactory.db.destroy();
 };
 
-module.exports = { run, destroy };
+
+module.exports = {
+  run,
+  destroy,
+  seed: async function(knex) {
+    await run(knex);
+  }
+};

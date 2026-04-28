@@ -38,9 +38,15 @@ const run = async (knex) => {
 
   console.log('\nSeeding complete!');
 };
-
 const destroy = async () => {
   await MatchFactory.db.destroy();
 };
 
-module.exports = { run, destroy };
+
+module.exports = {
+  run,
+  destroy,
+  seed: async function(knex) {
+    await run(knex);
+  }
+};

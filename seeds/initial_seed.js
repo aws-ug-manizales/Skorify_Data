@@ -60,17 +60,6 @@ async function run() {
   await matchSeed.run(db);
 }
 
-run()
-  .catch((err) => {
-    console.error('Seeding failed:', err);
-    process.exit(1);
-  })
-  .finally(() => {
-    db.destroy();
-    UserFactory.db.destroy();
-    TournamentFactory.db.destroy();
-    InstanceFactory.db.destroy();
-    InstanceUserFactory.db.destroy();
-    teamSeed.destroy();
-    matchSeed.destroy();
-  });
+exports.seed = async function(knex) {
+  await run();
+};

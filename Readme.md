@@ -194,51 +194,38 @@ Levantas PostgreSQL → Espera a estar listo → Ejecutas Knex → Se crean tabl
 
 ## Onboarding de equipo (paso a paso)
 
-1. Instalar dependencias de Node (opcional si usaras solo migraciones dockerizadas):
+Este proyecto utiliza una arquitectura de monorepo dockerizado diseñada para funcionar como una "nube local". La configuración garantiza que el entorno de base de datos, las dependencias y el servidor se sincronicen automáticamente sin intervención manual.
+
+1. Requisitos Previos
+Docker y Docker Compose instalados.
+
+Archivo .env configurado en la raíz del proyecto (basado en .env.example).
+
+2. Levantamiento Automático 
 
 ```bash
-npm ci
+docker compose up --build
 ```
+3. ¿Qué sucede internamente? (Flujo de la Nube)
 
-2. Crear entorno local y completar con los siguientes datos:
+El archivo docker-compose.yml gestiona un flujo de trabajo orquestado para cumplir con los criterios de robustez y persistencia:
 
-```bash
-DB_HOST=postgres
-DB_PORT=5432
-DB_NAME=
-DB_USER=
-DB_PASSWORD=
-```
-## Forma corta
-```bash
-    docker compose up -d
-    npx knex migrate:up
-    npm run seed
-```
+Capa de Persistencia: Se despliega PostgreSQL 18.3-alpine. El sistema utiliza un healthcheck para asegurar que la base de datos esté lista antes de proceder.
 
-3. Levantar PostgreSQL:
+Capa de Preparación (skorify_setup):
+Instala herramientas esenciales (git, build-base) para la compilación de módulos nativos.
+Realiza el npm ci y compila la librería core en la carpeta /dist.
 
-```bash
-npm run db:up
-```
-Esto hace:
-- Crea contenedor skorify_db
-- Expone puerto 5432
-- Espera a que la DB esté lista (healthcheck)
+Ejecuta automáticamente las migraciones (knex migrate:latest) y carga los 3 archivos de seed con datos iniciales.
+Nota: Este contenedor se apaga automáticamente (Exited 0) al terminar su tarea.
 
-4. Aplicar migraciones:
+Capa de Aplicación (dev-server):
+Espera a que el proceso de preparación termine con éxito.
 
-```bash
-npm run migrate
-```
-Esto hace:
-- Levanta contenedor temporal knex
-- Ejecuta:
+Vinculación Dinámica: Inyecta automáticamente la librería compilada en node_modules/skorifydata para resolver dependencias internas del monorepo.
 
-```bash
-npx knex migrate:latest
-```
-- Para crear todas las tablas
+Inicia el servidor de desarrollo en http://localhost:3000.
+
 
 ## Verificar que TODO funciona
 
@@ -247,6 +234,23 @@ docker exec -it skorify_db psql -U postgres -d polla_mundial -c "\dt"
 ```
 Si todo sale bien, verás las tablas en tu pestaña de logs
 
+```bash
+
+docker exec -it skorify_db psql -U postgres -d polla_mundial -c "SELECT * FROM users;"
+```
+Para consultar los usuarios inyectados por el proceso de seed
+
+## Reinicio Limpio (Reset de Datos)
+Si el proceso de skorify_setup falla por errores de "llave duplicada" o si se desea limpiar la base de datos para cargar los datos iniciales desde cero, es necesario eliminar los volúmenes persistentes antes de volver a levantar el entorno:
+
+- Detener contenedores y eliminar volúmenes
+```bash
+docker compose down -v
+```
+- Levantar nuevamente con reconstrucción
+```bash
+docker compose up --build
+```
 ## Scripts disponibles
 
 ``` bash

@@ -17,9 +17,9 @@ services:
     volumes:
       - pgdata:/var/lib/postgresql/data
 
-  knex:
+  skorify_setup:
     image: node:24-alpine
-    profiles: ['tools']
+    container_name: skorify_setup
     working_dir: /workspace
     depends_on:
       postgres:
@@ -27,38 +27,52 @@ services:
     environment:
       DB_HOST: postgres
       DB_PORT: 5432
-      DB_NAME: ${DB_NAME}
-      DB_USER: ${DB_USER}
-      DB_PASSWORD: ${DB_PASSWORD}
-      KNEX_COMMAND: ${KNEX_COMMAND}
-    entrypoint:
-      - sh
-      - -lc
-      - npm ci --no-audit --no-fund && npx knex $${KNEX_COMMAND}
+      DB_NAME: ${DB_NAME:-polla_mundial}
+      DB_USER: ${DB_USER:-postgres}
+      DB_PASSWORD: ${DB_PASSWORD:-password}
     volumes:
       - ./:/workspace
-      - knex_node_modules:/workspace/node_modules
+      - root_node_modules:/workspace/node_modules
+    entrypoint:
+      - sh
+      - -c
+      - |
+        set -e
+        apk add --no-cache git build-base
+        npm ci --no-audit --no-fund
+        npm run build
+        npx knex migrate:latest
+        npx knex seed:run
 
   dev-server:
     image: node:24-alpine
     container_name: dev-server
-    profiles: ['dev']
     restart: unless-stopped
-    working_dir: /workspace
+    working_dir: /workspace/dev-server
     ports:
       - '${DEV_server_PORT:-3000}:3000'
     depends_on:
       postgres:
         condition: service_healthy
-    entrypoint:
-      - sh
-      - -lc
-      - cd dev-server && npm ci --no-audit --no-fund && npm run dev
+      skorify_setup:
+        condition: service_completed_successfully
     volumes:
       - ./:/workspace
-      - dev-server-node_modules:/workspace/node_modules
+      - dev_server_node_modules:/workspace/dev-server/node_modules
+    entrypoint:
+      - sh
+      - -c
+      - |
+        set -e
+        apk add --no-cache git
+        npm install --no-audit --no-fund
+        mkdir -p node_modules/skorifydata
+        cp ../package.json node_modules/skorifydata/
+        cp -r ../dist node_modules/skorifydata/
+        echo "--- Iniciando App ---"
+        npm run dev
 
 volumes:
   pgdata:
-  knex_node_modules:
-  dev-server-node_modules:
+  root_node_modules:
+  dev_server_node_modules:
