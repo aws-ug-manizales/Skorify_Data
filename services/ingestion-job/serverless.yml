@@ -1,14 +1,28 @@
 service: skorify-ingestion-job
+
 provider:
   name: aws
   runtime: nodejs18.x
   region: us-east-1
+  environment:
+    SQS_URL: !Ref IngestionQueue
+  iam:
+    role:
+      statements:
+        - Effect: Allow
+          Action:
+            - sqs:SendMessage
+            - sqs:ReceiveMessage
+            - sqs:DeleteMessage
+            - sqs:GetQueueAttributes
+          Resource:
+            - !GetAtt IngestionQueue.Arn
 
 functions:
   extractor:
     handler: handler.extractor
     events:
-      - schedule: rate(15 minutes) # Criterio: Cron cada 15 min
+      - schedule: rate(15 minutes)
 
   processor:
     handler: handler.processor
@@ -24,7 +38,11 @@ resources:
       Type: "AWS::SQS::Queue"
       Properties:
         QueueName: "skorify-matches-queue"
-    IngestionDLQ: # Criterio: Dead Letter Queue
+        RedrivePolicy:
+          deadLetterTargetArn: !GetAtt IngestionDLQ.Arn
+          maxReceiveCount: 3
+
+    IngestionDLQ:
       Type: "AWS::SQS::Queue"
       Properties:
         QueueName: "skorify-matches-dlq"
