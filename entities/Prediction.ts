@@ -7,20 +7,14 @@ import {
   ManyToOne,
   JoinColumn,
   Unique,
-  Check,
-
-} import from 'typeorm';
+} from 'typeorm';
 import type { InstanceUser } from './InstanceUser';
 import type { Match } from './Match';
 
 @Entity('predictions')
 @Unique(['instance_player_id', 'match_id'])
-@Check(`"pred_home_goals" >= 0 AND "pred_away_goals" >= 0`) // Goles válidos
-@Check(`"earned_points" >= 0`)
-
 export class Prediction {
   @PrimaryGeneratedColumn('uuid')
-  
   id!: string;
 
   @Column({ type: 'uuid' })

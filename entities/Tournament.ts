@@ -4,7 +4,6 @@ import {
   Column,
   CreateDateColumn,
   OneToMany,
-  Check,
 } from 'typeorm';
 import type { TournamentTeam } from './TournamentTeam';
 import type { Group } from './Group';
@@ -14,32 +13,18 @@ import type { Leaderboard } from './Leaderboard';
 import type { Instance } from './Instance';
 
 @Entity('tournaments')
-@Check(`"end_date" >= "start_date"`)
 export class Tournament {
   @PrimaryGeneratedColumn('uuid')
   id!: string;
 
-  @Column({ type: 'varchar', length: 100, unique: true })
+  @Column({ type: 'varchar' })
   name!: string;
 
-  @Column({ type: 'date', nullable: false })
-  start_date!: Date;  
+  @Column({ type: 'date', nullable: true })
+  start_date!: string | null;
 
-  @Column({ type: 'date', nullable: false })
-  end_date!: string;
-
-  @Column({
-    type: 'varchar',
-    default: 'PLANNED',
-  })
-
-  @Column({
-  type: 'enum',
-  enum: ['PLANNED', 'ACTIVE', 'FINISHED'],
-  default: 'PLANNED',
-  })
-
-  status!: 'PLANNED' | 'ACTIVE' | 'FINISHED'; // Regla de negocio: estados válidos
+  @Column({ type: 'date', nullable: true })
+  end_date!: string | null;
 
   @CreateDateColumn({ type: 'timestamptz' })
   created_at!: Date;
