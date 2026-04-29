@@ -3,14 +3,8 @@ import { GroupTeam } from "../../entities/GroupTeam";
 import { BaseDataService } from "./base.service";
 
 export class GroupTeamService extends BaseDataService<GroupTeam> {
-    constructor(private readonly repository: Repository<GroupTeam>) {
-        super(GroupTeam);
-    }
-
-    async create(data: Partial<GroupTeam>): Promise<GroupTeam> {
-        await this.validateSchema(data);
-        const groupTeam = this.repository.create(data);
-        return await this.repository.save(groupTeam);
+    constructor(repository: Repository<GroupTeam>) {
+        super(GroupTeam, repository);
     }
 
     async findByGroupId(group_id: string): Promise<GroupTeam[]> {
@@ -19,9 +13,5 @@ export class GroupTeamService extends BaseDataService<GroupTeam> {
 
     async findByTeamId(team_id: string): Promise<GroupTeam[]> {
         return await this.repository.find({ where: { team_id } });
-    }
-
-    async delete(id: string): Promise<void> {
-        await this.repository.delete(id);
     }
 }
