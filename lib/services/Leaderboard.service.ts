@@ -3,18 +3,8 @@ import { Leaderboard } from "../../entities/Leaderboard";
 import { BaseDataService } from "./base.service";
 
 export class LeaderboardService extends BaseDataService<Leaderboard> {
-    constructor(private readonly repository: Repository<Leaderboard>) {
-        super(Leaderboard);
-    }
-
-    async create(data: Partial<Leaderboard>): Promise<Leaderboard> {
-        await this.validateSchema(data);
-        const entry = this.repository.create(data);
-        return await this.repository.save(entry);
-    }
-
-    async findById(id: string): Promise<Leaderboard | null> {
-        return await this.repository.findOne({ where: { id } });
+    constructor(repository: Repository<Leaderboard>) {
+        super(Leaderboard, repository);
     }
 
     async findByTournamentId(tournament_id: string): Promise<Leaderboard[]> {

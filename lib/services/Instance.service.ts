@@ -3,17 +3,11 @@ import { Instance } from "../../entities/Instance";
 import { BaseDataService } from "./base.service";
 
 export class InstanceService extends BaseDataService<Instance> {
-    constructor(private readonly repository: Repository<Instance>) {
-        super(Instance);
+    constructor(repository: Repository<Instance>) {
+        super(Instance, repository);
     }
 
-    async create(data: Partial<Instance>): Promise<Instance> {
-        await this.validateSchema(data);
-        const instance = this.repository.create(data);
-        return await this.repository.save(instance);
-    }
-
-    async findById(id: string): Promise<Instance | null> {
+    async getById(id: string): Promise<Instance | null> {
         return await this.repository.findOne({ where: { id, deleted_at: IsNull() } });
     }
 
@@ -29,7 +23,7 @@ export class InstanceService extends BaseDataService<Instance> {
         await this.repository.update(id, { state });
     }
 
-    async softDelete(id: string): Promise<void> {
+    async deleteById(id: string): Promise<void> {
         await this.repository.update(id, { deleted_at: new Date() });
     }
 }

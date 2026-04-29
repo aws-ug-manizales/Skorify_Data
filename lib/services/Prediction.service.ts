@@ -3,17 +3,11 @@ import { Prediction } from "../../entities/Prediction";
 import { BaseDataService } from "./base.service";
 
 export class PredictionService extends BaseDataService<Prediction> {
-    constructor(private readonly repository: Repository<Prediction>) {
-        super(Prediction);
+    constructor(repository: Repository<Prediction>) {
+        super(Prediction, repository);
     }
 
-    async create(data: Partial<Prediction>): Promise<Prediction> {
-        await this.validateSchema(data);
-        const prediction = this.repository.create(data);
-        return await this.repository.save(prediction);
-    }
-
-    async findById(id: string): Promise<Prediction | null> {
+    async getById(id: string): Promise<Prediction | null> {
         return await this.repository.findOne({ where: { id, deleted_at: IsNull() } });
     }
 
@@ -29,7 +23,7 @@ export class PredictionService extends BaseDataService<Prediction> {
         await this.repository.update(id, { earned_points });
     }
 
-    async softDelete(id: string): Promise<void> {
+    async deleteById(id: string): Promise<void> {
         await this.repository.update(id, { deleted_at: new Date() });
     }
 }
