@@ -9,10 +9,10 @@ import {
   Unique,
 } from 'typeorm';
 import { User } from './User';
-import { Tournament } from './Tournament';
+import { Instance } from '.';
 
 @Entity('leaderboard')
-@Unique(['user_id', 'tournament_id'])
+@Unique(['user_id', 'instance_id'])
 export class Leaderboard {
   @PrimaryGeneratedColumn('uuid')
   id!: string;
@@ -21,7 +21,7 @@ export class Leaderboard {
   user_id!: string;
 
   @Column({ type: 'uuid' })
-  tournament_id!: string;
+  instance_id!: string;
 
   @Column({ type: 'int', nullable: true })
   position!: number | null;
@@ -45,7 +45,7 @@ export class Leaderboard {
   @JoinColumn({ name: 'user_id' })
   user!: User;
 
-  @ManyToOne(() => Tournament, (t) => t.leaderboard, { onDelete: 'CASCADE' })
-  @JoinColumn({ name: 'tournament_id' })
-  tournament!: Tournament;
+  @ManyToOne(() => Instance, (t) => t.leaderboard, { onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'instance_id' })
+  instance!: Instance;
 }

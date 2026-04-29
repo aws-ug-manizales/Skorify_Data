@@ -107,7 +107,7 @@ erDiagram
 	LEADERBOARD {
 		uuid id PK ""  
 		uuid user_id FK ""  
-		uuid tournament_id FK ""  
+		uuid instance_id FK ""  
 		int position ""
 		int total_points  ""  
 		int exact_hits  ""  
