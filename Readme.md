@@ -84,7 +84,7 @@ erDiagram
 		timestamp kick_off  ""  
 		int home_goals  ""  
 		int away_goals  ""  
-		varchar status  "'scheduled' | 'in_progress' | 'finished' | 'draft' "  
+		varchar status  "'scheduled' | 'in_progress' | 'finished' | 'draft'"  
 		varchar stage  "group | finals"  
 		varchar venue  ""  
 		timestamp created_at  ""  
