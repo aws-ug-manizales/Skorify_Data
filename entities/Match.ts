@@ -48,12 +48,12 @@ export class Match {
 
   @Column({
     type: 'enum',
-    enum: ['scheduled', 'in_progress', 'finished'],
+    enum: ['scheduled', 'in_progress', 'finished','draft'],
     default: 'scheduled',
   })
   @IsOptional()
-  @IsIn(['scheduled', 'in_progress', 'finished'])
-  status?: 'scheduled' | 'in_progress' | 'finished';
+  @IsIn(['scheduled', 'in_progress', 'finished','draft'])
+  status?: 'scheduled' | 'in_progress' | 'finished' | 'draft';
 
   @Column({
     type: 'enum',
