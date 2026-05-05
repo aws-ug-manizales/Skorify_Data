@@ -308,18 +308,18 @@ La librería expone progresivamente cada entidad como un servicio que extiende `
 |---|---|---|---|
 | User | [entities/User.ts](entities/User.ts) | [lib/services/User.service.ts](lib/services/User.service.ts) | Disponible |
 | Match | [entities/Match.ts](entities/Match.ts) | [lib/services/Match.service.ts](lib/services/Match.service.ts) | Disponible |
-| Tournament | [entities/Tournament.ts](entities/Tournament.ts) | — | Pendiente |
-| Team | [entities/Team.ts](entities/Team.ts) | — | Pendiente |
-| TournamentTeam | [entities/TournamentTeam.ts](entities/TournamentTeam.ts) | — | Pendiente |
-| Group | [entities/Group.ts](entities/Group.ts) | — | Pendiente |
-| GroupTeam | [entities/GroupTeam.ts](entities/GroupTeam.ts) | — | Pendiente |
-| Prediction | [entities/Prediction.ts](entities/Prediction.ts) | — | Pendiente |
-| Payment | [entities/Payment.ts](entities/Payment.ts) | — | Pendiente |
-| Leaderboard | [entities/Leaderboard.ts](entities/Leaderboard.ts) | — | Pendiente |
-| Rule | [entities/Rule.ts](entities/Rule.ts) | — | Pendiente |
-| Instance | [entities/Instance.ts](entities/Instance.ts) | — | Pendiente |
-| InstanceUser | [entities/InstanceUser.ts](entities/InstanceUser.ts) | — | Pendiente |
-| InstanceRule | [entities/InstanceRule.ts](entities/InstanceRule.ts) | — | Pendiente |
+| Tournament | [entities/Tournament.ts](entities/Tournament.ts) | [lib/services/Tournament.service.ts](lib/services/Tournament.service.ts) | Disponible |
+| Team | [entities/Team.ts](entities/Team.ts) | [lib/services/Team.service.ts](lib/services/Team.service.ts) | Disponible |
+| TournamentTeam | [entities/TournamentTeam.ts](entities/TournamentTeam.ts) | [lib/services/TournamentTeam.service.ts](lib/services/TournamentTeam.service.ts) | Disponible |
+| Group | [entities/Group.ts](entities/Group.ts) | [lib/services/Group.service.ts](lib/services/Group.service.ts) | Disponible |
+| GroupTeam | [entities/GroupTeam.ts](entities/GroupTeam.ts) | [lib/services/GroupTeam.service.ts](lib/services/GroupTeam.service.ts) | Disponible |
+| Prediction | [entities/Prediction.ts](entities/Prediction.ts) | [lib/services/Prediction.service.ts](lib/services/Prediction.service.ts) | Disponible |
+| Payment | [entities/Payment.ts](entities/Payment.ts) | [lib/services/Payment.service.ts](lib/services/Payment.service.ts) | Disponible |
+| Leaderboard | [entities/Leaderboard.ts](entities/Leaderboard.ts) | [lib/services/Leaderboard.service.ts](lib/services/Leaderboard.service.ts) | Disponible |
+| Rule | [entities/Rule.ts](entities/Rule.ts) | [lib/services/Rule.service.ts](lib/services/Rule.service.ts) | Disponible |
+| Instance | [entities/Instance.ts](entities/Instance.ts) | [lib/services/Instance.service.ts](lib/services/Instance.service.ts) | Disponible |
+| InstanceUser | [entities/InstanceUser.ts](entities/InstanceUser.ts) | [lib/services/InstanceUser.service.ts](lib/services/InstanceUser.service.ts) | Disponible |
+| InstanceRule | [entities/InstanceRule.ts](entities/InstanceRule.ts) | [lib/services/InstanceRule.service.ts](lib/services/InstanceRule.service.ts) | Disponible |
 
 ## En caso de romperlo todo
 ```bash
