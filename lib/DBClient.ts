@@ -48,6 +48,19 @@ export class DBClient {
         this.matches = new MatchService(this.dataSource.getRepository(Match));
     }
 
+    getServiceByName<T>(name: string): any {
+        const serviceName = name.toLowerCase();
+        const servicesMap: Record<string, any> = {
+            users: this.users,
+            matches: this.matches,
+        };
+        const service = servicesMap[serviceName];
+        if (!service) {
+            throw new Error(`Service for entity '${name}' not found`);
+        }
+        return service;
+    }
+
     async connect() {
         if (!this.dataSource.isInitialized) await this.dataSource.initialize();
     }
