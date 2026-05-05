@@ -1,6 +1,6 @@
 import { validateOrReject, ValidationError } from "class-validator";
 import { plainToInstance } from "class-transformer";
-import { DeepPartial, FindOptionsWhere, In, Repository } from "typeorm";
+import { DeepPartial, FindManyOptions, FindOptionsWhere, In, Repository } from "typeorm";
 
 export abstract class BaseDataService<T extends { id: string }> {
     constructor(
@@ -8,7 +8,7 @@ export abstract class BaseDataService<T extends { id: string }> {
         protected readonly repository: Repository<T>
     ) {}
 
-    async create(data: Partial<T>): Promise<T> {
+    async save(data: Partial<T>): Promise<T> {
         await this.validateData(data);
         await this.validateRules(data);
         const newEntity = this.repository.create(data as DeepPartial<T>);
@@ -42,6 +42,17 @@ export abstract class BaseDataService<T extends { id: string }> {
 
     async deleteById(id: string): Promise<void> {
         await this.repository.delete(id);
+    }
+
+    async filter(filters: FindManyOptions<T>): Promise<T[]> {
+        if (!filters.take) filters.take = 100; // Default limit
+        filters.where = this.applyBoundaries(filters.where);
+        return await this.repository.find(filters);
+    }
+
+    protected applyBoundaries(where?: FindOptionsWhere<T> | FindOptionsWhere<T>[]): FindOptionsWhere<T> | FindOptionsWhere<T>[] {
+        // Implement boundary logic if needed, e.g., based on user permissions
+        return where || {};
     }
 
     protected async validateData(data: Partial<T>): Promise<void> {
