@@ -3,8 +3,8 @@ import { Team } from "../../entities/Team";
 import { BaseDataService } from "./base.service";
 
 export class TeamService extends BaseDataService<Team> {
-    constructor(private readonly repository: Repository<Team>) {
-        super(Team);
+    constructor(repository: Repository<Team>) {
+        super(Team, repository);
     }
 
     async create(data: Partial<Team>): Promise<Team> {
