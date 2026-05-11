@@ -1,18 +1,11 @@
 import "reflect-metadata";
 import { DataSource, DataSourceOptions } from "typeorm";
-import { Group } from "../entities/Group";
-import { GroupTeam } from "../entities/GroupTeam";
-import { Instance } from "../entities/Instance";
-import { InstanceRule } from "../entities/InstanceRule";
-import { InstanceUser } from "../entities/InstanceUser";
-import { Leaderboard } from "../entities/Leaderboard";
+import { TournamentInstance } from "../entities/TournamentInstance";
+import { UserEnrollment } from "../entities/UserEnrollment";
 import { Match } from "../entities/Match";
-import { Payment } from "../entities/Payment";
 import { Prediction } from "../entities/Prediction";
-import { Rule } from "../entities/Rule";
 import { Team } from "../entities/Team";
 import { Tournament } from "../entities/Tournament";
-import { TournamentTeam } from "../entities/TournamentTeam";
 import { User } from "../entities/User";
 import { UserService } from "./services/User.service";
 import { MatchService } from "./services/Match.service";
@@ -21,17 +14,10 @@ const DEFAULT_ENTITIES = [
     User,
     Tournament,
     Team,
-    TournamentTeam,
-    Group,
-    GroupTeam,
     Match,
-    Rule,
-    Instance,
-    InstanceUser,
-    InstanceRule,
+    TournamentInstance,
+    UserEnrollment,
     Prediction,
-    Payment,
-    Leaderboard,
 ];
 
 export class DBClient {
