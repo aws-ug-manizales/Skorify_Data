@@ -10,11 +10,10 @@ import {
 } from 'typeorm';
 import type { Tournament } from './Tournament';
 import type { User } from './User';
-import type { InstanceUser } from './InstanceUser';
-import type { InstanceRule } from './InstanceRule';
+import type { UserEnrollment } from './UserEnrollment';
 
-@Entity('instances')
-export class Instance {
+@Entity('tournament_instances')
+export class TournamentInstance {
   @PrimaryGeneratedColumn('uuid')
   id!: string;
 
@@ -37,9 +36,6 @@ export class Instance {
   @Column({ type: 'varchar' })
   name!: string;
 
-  @Column({ type: 'int', default: 0 })
-  price!: number;
-
   @CreateDateColumn({ type: 'timestamptz' })
   created_at!: Date;
 
@@ -49,7 +45,7 @@ export class Instance {
   @Column({ type: 'timestamptz', nullable: true, default: null })
   deleted_at!: Date | null;
 
-  @ManyToOne('Tournament', 'instances', { onDelete: 'CASCADE' })
+  @ManyToOne('Tournament', 'tournament_instances', { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'tournament_id' })
   tournament!: Tournament;
 
@@ -57,13 +53,7 @@ export class Instance {
   @JoinColumn({ name: 'owner_user_id' })
   owner!: User;
 
-  @ManyToOne('User', 'validated_instances', { onDelete: 'SET NULL' })
-  @JoinColumn({ name: 'validator_user_id' })
-  validator!: User | null;
+  @OneToMany('UserEnrollment', 'tournament_instance')
+  user_enrollments!: UserEnrollment[];
 
-  @OneToMany('InstanceUser', 'instance')
-  instance_users!: InstanceUser[];
-
-  @OneToMany('InstanceRule', 'instance')
-  instance_rules!: InstanceRule[];
 }

@@ -5,21 +5,22 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
   OneToMany,
+  JoinColumn,
+  ManyToOne,
 } from 'typeorm';
-import type { TournamentTeam } from './TournamentTeam';
-import type { GroupTeam } from './GroupTeam';
 import type { Match } from './Match';
+import { Tournament } from '../lib';
 
 @Entity('teams')
 export class Team {
   @PrimaryGeneratedColumn('uuid')
   id!: string;
 
+  @Column({ type: 'uuid' })
+  tournament_id!: string;
+
   @Column({ type: 'varchar' })
   name!: string;
-
-  @Column({ type: 'varchar', unique: true })
-  code!: string;
 
   @Column({ type: 'varchar', nullable: true })
   shield_url!: string | null;
@@ -33,15 +34,13 @@ export class Team {
   @Column({ type: 'timestamptz', nullable: true, default: null })
   deleted_at!: Date | null;
 
-  @OneToMany('TournamentTeam', 'team')
-  tournament_teams!: TournamentTeam[];
-
-  @OneToMany('GroupTeam', 'team')
-  group_teams!: GroupTeam[];
-
   @OneToMany('Match', 'home_team')
   home_matches!: Match[];
 
   @OneToMany('Match', 'away_team')
   away_matches!: Match[];
+
+  @ManyToOne('Tournament', 'teams', { onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'tournament_id' })
+  tournament!: Tournament;
 }
