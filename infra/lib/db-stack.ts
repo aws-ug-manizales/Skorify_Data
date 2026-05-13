@@ -4,6 +4,7 @@ import * as ec2 from 'aws-cdk-lib/aws-ec2';
 import * as rds from 'aws-cdk-lib/aws-rds';
 import * as events from 'aws-cdk-lib/aws-events';
 import { RdsScheduler } from './constructs/rds-scheduler';
+import { isProduction } from '../utils/conditionals';
 
 export class DatabaseStack extends cdk.Stack {
   public readonly vpc: ec2.Vpc;
@@ -30,5 +31,13 @@ export class DatabaseStack extends cdk.Stack {
     //   vpc: this.vpc,
     //   vpcSubnets: { subnetType: ec2.SubnetType.PRIVATE_ISOLATED },
     // });
+
+    if (!isProduction) {
+      new RdsScheduler(this, 'Scheduler', {
+        databaseInstance: this.database,
+        startSchedule: events.Schedule.cron({ minute: '0', hour: '21' }),
+        stopSchedule: events.Schedule.cron({ minute: '0', hour: '4' }),
+      });
+    }
   }
 }
