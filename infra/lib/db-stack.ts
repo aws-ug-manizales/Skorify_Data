@@ -2,8 +2,7 @@ import * as cdk from 'aws-cdk-lib';
 import { Construct } from 'constructs';
 import * as ec2 from 'aws-cdk-lib/aws-ec2';
 import * as rds from 'aws-cdk-lib/aws-rds';
-import * as events from 'aws-cdk-lib/aws-events';
-import { RdsScheduler } from './constructs/rds-scheduler';
+import * as events from "aws-cdk-lib/aws-events";
 
 export class DatabaseStack extends cdk.Stack {
   public readonly vpc: ec2.Vpc;
