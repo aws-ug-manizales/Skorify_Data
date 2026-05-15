@@ -25,6 +25,8 @@
   "dependencies": {
     "@aws-sdk/client-eventbridge": "^3.658.0",
     "aws-cdk-lib": "^2.252.0",
-    "constructs": "^10.5.0"
+    "constructs": "^10.5.0",
+    "node-fetch": "^3.3.2",
+    "skorifydata": "github:aws-ug-manizales/Skorify_Data#v.1.1.1"
   }
 }

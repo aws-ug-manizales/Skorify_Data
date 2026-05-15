@@ -10,6 +10,8 @@ import * as sfn from "aws-cdk-lib/aws-stepfunctions";
 import * as sfnTasks from "aws-cdk-lib/aws-stepfunctions-tasks";
 import { Duration } from "aws-cdk-lib";
 
+import { createMatchesFlow } from "./constructs/createMatchesFlow";
+
 export class EventBridgeStack extends cdk.Stack {
   public readonly bus: events.EventBus;
 
@@ -171,5 +173,7 @@ export class EventBridgeStack extends cdk.Stack {
       },
       targets: [new targets.SfnStateMachine(rankingStateMachine)],
     });
+
+    new createMatchesFlow(this, "CreateMatchesFlow", {});
   }
 }
