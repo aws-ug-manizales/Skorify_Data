@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 import * as cdk from "aws-cdk-lib/core";
 import { DatabaseStack } from "../lib/db-stack";
-import { EventBridgeStack } from "../lib/eventbridge-stack";
+import { MatchProcessingStack } from "../lib/match-processing-stack";
 
 const app = new cdk.App();
 
@@ -11,4 +11,4 @@ const env = {
 };
 
 new DatabaseStack(app, "skorifyDatabase", { env });
-new EventBridgeStack(app, "skorifyEventBridge", { env });
+new MatchProcessingStack(app, "skorifyEventBridge", { env });

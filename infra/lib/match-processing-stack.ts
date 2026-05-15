@@ -3,64 +3,69 @@ import { Construct } from "constructs";
 import * as events from "aws-cdk-lib/aws-events";
 import * as targets from "aws-cdk-lib/aws-events-targets";
 import * as sqs from "aws-cdk-lib/aws-sqs";
-import * as lambda from "aws-cdk-lib/aws-lambda";
 import * as nodejs from "aws-cdk-lib/aws-lambda-nodejs";
 import * as sources from "aws-cdk-lib/aws-lambda-event-sources";
 import * as sfn from "aws-cdk-lib/aws-stepfunctions";
 import * as sfnTasks from "aws-cdk-lib/aws-stepfunctions-tasks";
 import { Duration } from "aws-cdk-lib";
+import {
+  SKORIFY_DATA_BUS,
+  EventSources,
+  DetailTypes,
+  QUEUE_DEFAULTS,
+  LAMBDA_DEFAULTS,
+} from "./constants";
 
-export class EventBridgeStack extends cdk.Stack {
+export class MatchProcessingStack extends cdk.Stack {
   public readonly bus: events.EventBus;
 
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
     super(scope, id, props);
 
     this.bus = new events.EventBus(this, "SkorifyDataBus", {
-      eventBusName: "SkorifyDataBus",
+      eventBusName: SKORIFY_DATA_BUS,
     });
 
     const dlq = new sqs.Queue(this, "DLQ", {
       retentionPeriod: Duration.days(14),
     });
 
-    const finishMatchQueue = new sqs.Queue(this, "FinishMatchQueue", {
-      deadLetterQueue: { queue: dlq, maxReceiveCount: 3 },
-      visibilityTimeout: Duration.seconds(60),
-    });
+    const createQueue = (name: string): sqs.Queue =>
+      new sqs.Queue(this, name, {
+        deadLetterQueue: {
+          queue: dlq,
+          maxReceiveCount: QUEUE_DEFAULTS.maxReceiveCount,
+        },
+        visibilityTimeout: QUEUE_DEFAULTS.visibilityTimeout,
+      });
 
-    const notifyUserQueue = new sqs.Queue(this, "NotifyUserQueue", {
-      deadLetterQueue: { queue: dlq, maxReceiveCount: 3 },
-      visibilityTimeout: Duration.seconds(60),
-    });
+    const finishMatchQueue = createQueue("FinishMatchQueue");
+    const notifyUserQueue = createQueue("NotifyUserQueue");
 
-    const workerLambda = new nodejs.NodejsFunction(this, "WorkerLambda", {
-      entry: "lambdas/worker.ts",
-      handler: "handler",
-      runtime: lambda.Runtime.NODEJS_22_X,
-      timeout: Duration.seconds(30),
-      environment: {
-        EVENT_BUS_NAME: this.bus.eventBusName,
-      },
-    });
+    const createLambda = (name: string, entry: string): nodejs.NodejsFunction =>
+      new nodejs.NodejsFunction(this, name, {
+        entry,
+        handler: "handler",
+        runtime: LAMBDA_DEFAULTS.runtime,
+        timeout: LAMBDA_DEFAULTS.timeout,
+      });
+
+    const workerLambda = createLambda("WorkerLambda", "lambdas/worker.ts");
+    workerLambda.addEnvironment("EVENT_BUS_NAME", this.bus.eventBusName);
     this.bus.grantPutEventsTo(workerLambda);
 
-    const finishMatchLambda = new nodejs.NodejsFunction(this, "FinishMatchLambda", {
-      entry: "lambdas/finish-match.ts",
-      handler: "handler",
-      runtime: lambda.Runtime.NODEJS_22_X,
-      timeout: Duration.seconds(30),
-    });
+    const finishMatchLambda = createLambda(
+      "FinishMatchLambda",
+      "lambdas/finish-match.ts"
+    );
     finishMatchLambda.addEventSource(
       new sources.SqsEventSource(finishMatchQueue, { batchSize: 10 })
     );
 
-    const notifyUsersLambda = new nodejs.NodejsFunction(this, "NotifyUsersLambda", {
-      entry: "lambdas/notify-users.ts",
-      handler: "handler",
-      runtime: lambda.Runtime.NODEJS_22_X,
-      timeout: Duration.seconds(30),
-    });
+    const notifyUsersLambda = createLambda(
+      "NotifyUsersLambda",
+      "lambdas/notify-users.ts"
+    );
     notifyUsersLambda.addEventSource(
       new sources.SqsEventSource(notifyUserQueue, { batchSize: 10 })
     );
@@ -68,8 +73,8 @@ export class EventBridgeStack extends cdk.Stack {
     new events.Rule(this, "MatchFinishedSkorifyDataRule", {
       eventBus: this.bus,
       eventPattern: {
-        source: ["SkorifyData"],
-        detailType: ["MatchFinished"],
+        source: [EventSources.SKORIFY_DATA],
+        detailType: [DetailTypes.MATCH_FINISHED],
       },
       targets: [new targets.SqsQueue(finishMatchQueue)],
     });
@@ -77,8 +82,8 @@ export class EventBridgeStack extends cdk.Stack {
     new events.Rule(this, "NotifyUserSkorifyBackendRule", {
       eventBus: this.bus,
       eventPattern: {
-        source: ["SkorifyBackend"],
-        detailType: ["NotifyUser"],
+        source: [EventSources.SKORIFY_BACKEND],
+        detailType: [DetailTypes.NOTIFY_USER],
       },
       targets: [new targets.SqsQueue(notifyUserQueue)],
     });
@@ -88,37 +93,19 @@ export class EventBridgeStack extends cdk.Stack {
       targets: [new targets.LambdaFunction(workerLambda)],
     });
 
-    const getInstancesLambda = new nodejs.NodejsFunction(
-      this,
+    const getInstancesLambda = createLambda(
       "GetTournamentInstancesLambda",
-      {
-        entry: "lambdas/get-tournament-instances.ts",
-        handler: "handler",
-        runtime: lambda.Runtime.NODEJS_22_X,
-        timeout: Duration.seconds(30),
-      }
+      "lambdas/get-tournament-instances.ts"
     );
 
-    const calcInstanceLambda = new nodejs.NodejsFunction(
-      this,
+    const calcInstanceLambda = createLambda(
       "CalculateInstanceRankingLambda",
-      {
-        entry: "lambdas/calculate-instance-ranking.ts",
-        handler: "handler",
-        runtime: lambda.Runtime.NODEJS_22_X,
-        timeout: Duration.seconds(30),
-      }
+      "lambdas/calculate-instance-ranking.ts"
     );
 
-    const calcGlobalLambda = new nodejs.NodejsFunction(
-      this,
+    const calcGlobalLambda = createLambda(
       "CalculateGlobalRankingLambda",
-      {
-        entry: "lambdas/calculate-global-ranking.ts",
-        handler: "handler",
-        runtime: lambda.Runtime.NODEJS_22_X,
-        timeout: Duration.seconds(30),
-      }
+      "lambdas/calculate-global-ranking.ts"
     );
 
     const getInstancesTask = new sfnTasks.LambdaInvoke(
@@ -139,11 +126,11 @@ export class EventBridgeStack extends cdk.Stack {
       }
     );
 
-    const mapState = new sfn.Map(this, "MapInstances", {
+    const mapInstancesState = new sfn.Map(this, "MapInstancesPerTournament", {
       itemsPath: "$.instances",
       maxConcurrency: 5,
     });
-    mapState.iterator(calcInstanceTask);
+    mapInstancesState.iterator(calcInstanceTask);
 
     const calcGlobalTask = new sfnTasks.LambdaInvoke(
       this,
@@ -158,7 +145,9 @@ export class EventBridgeStack extends cdk.Stack {
       this,
       "RankingStateMachine",
       {
-        definition: getInstancesTask.next(mapState).next(calcGlobalTask),
+        definition: getInstancesTask
+          .next(mapInstancesState)
+          .next(calcGlobalTask),
         timeout: Duration.minutes(5),
       }
     );
@@ -166,8 +155,8 @@ export class EventBridgeStack extends cdk.Stack {
     new events.Rule(this, "MatchFinishedSkorifyBackendRule", {
       eventBus: this.bus,
       eventPattern: {
-        source: ["SkorifyBackend"],
-        detailType: ["MatchFinished"],
+        source: [EventSources.SKORIFY_BACKEND],
+        detailType: [DetailTypes.MATCH_FINISHED],
       },
       targets: [new targets.SfnStateMachine(rankingStateMachine)],
     });
