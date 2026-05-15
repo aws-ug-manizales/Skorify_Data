@@ -44,11 +44,13 @@ export class DatabaseStack extends cdk.Stack {
       removalPolicy: cdk.RemovalPolicy.SNAPSHOT, 
     });
 
-    new RdsScheduler(this, 'RdsScheduler', {
-      databaseInstance: this.database,
-      startSchedule: events.Schedule.cron({ minute: '0', hour: '12', weekDay: 'MON-FRI' }),
-      stopSchedule: events.Schedule.cron({ minute: '0', hour: '1', weekDay: 'MON-FRI' }),
-    });
+    if (!isProduction) {
+      new RdsScheduler(this, 'RdsScheduler', {
+        databaseInstance: this.database,
+        startSchedule: events.Schedule.cron({ minute: '0', hour: '12', weekDay: 'MON-FRI' }),
+        stopSchedule: events.Schedule.cron({ minute: '0', hour: '1', weekDay: 'MON-FRI' }),
+      });
+    }
 
     new cdk.CfnOutput(this, 'DBHost', {
       value: this.database.dbInstanceEndpointAddress,
