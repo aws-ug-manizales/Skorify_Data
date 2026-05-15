@@ -21,7 +21,7 @@ export class RdsScheduler extends Construct {
     super(scope, id);
 
     this.handler = new NodejsFunction(this, 'Handler', {
-      entry: path.join(__dirname, '..', '..', 'lambda', 'rds-scheduler.ts'),
+      entry: path.join(__dirname, '..', '..', 'lambdas', 'rds-scheduler.ts'),
       handler: 'handler',
       runtime: lambda.Runtime.NODEJS_20_X,
       timeout: cdk.Duration.minutes(1),

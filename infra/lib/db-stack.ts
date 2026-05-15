@@ -2,42 +2,54 @@ import * as cdk from 'aws-cdk-lib';
 import { Construct } from 'constructs';
 import * as ec2 from 'aws-cdk-lib/aws-ec2';
 import * as rds from 'aws-cdk-lib/aws-rds';
+import * as ssm from 'aws-cdk-lib/aws-ssm';
 import * as events from 'aws-cdk-lib/aws-events';
 import { RdsScheduler } from './constructs/rds-scheduler';
 import { isProduction } from '../utils/conditionals';
 
+export interface DatabaseStackProps extends cdk.StackProps {
+  envName: string;
+  env: Record<string, any>;
+}
+
 export class DatabaseStack extends cdk.Stack {
   public readonly database: rds.DatabaseInstance;
 
-  constructor(scope: Construct, id: string, props?: cdk.StackProps) {
+  constructor(scope: Construct, id: string, props: DatabaseStackProps) {
     super(scope, id, props);
 
-    
-    const vpc = ec2.Vpc.fromLookup(this, 'ImportedVPC', {
-      vpcName: 'VPC-SKORIFY-DEV', // cambiar por nombre de la vpc
-    });
+    const { envName, env } = props;
 
-    
+    const vpcName = ssm.StringParameter.valueFromLookup(
+      this,
+      `/skorify/${envName}/vpc-name`,
+    );
+    const dbSecurityGroupId = ssm.StringParameter.valueFromLookup(
+      this,
+      `/skorify/${envName}/db-sg-id`,
+    );
+
+    const vpc = ec2.Vpc.fromLookup(this, 'ImportedVPC', { vpcName });
+
     const dbSecurityGroup = ec2.SecurityGroup.fromSecurityGroupId(
-      this, 
-      'ImportedDBSecurityGroup', 
-      'sg-0123456789abcdef', // cambiar al id correcto
-      { mutable: true } 
+      this,
+      'ImportedDBSecurityGroup',
+      dbSecurityGroupId,
+      { mutable: true },
     );
 
     dbSecurityGroup.addIngressRule(
       ec2.Peer.ipv4(vpc.vpcCidrBlock),
-      ec2.Port.tcp(3306),
-      'Permitir conexión interna desde la VPC'
+      ec2.Port.tcp(5432),
+      'Allow internal connections from the VPC',
     );
 
     this.database = new rds.DatabaseInstance(this, 'skorifyDatabase', {
-      engine: rds.DatabaseInstanceEngine.mysql({ version: rds.MysqlEngineVersion.VER_8_0 }),
-      instanceType: ec2.InstanceType.of(ec2.InstanceClass.T3, ec2.InstanceSize.MICRO),
+      engine: rds.DatabaseInstanceEngine.postgres({ version: rds.PostgresEngineVersion.VER_18 }),
+      instanceType: ec2.InstanceType.of(ec2.InstanceClass.T4G, ec2.InstanceSize.MICRO),
       vpc,
       securityGroups: [dbSecurityGroup], 
       vpcSubnets: { 
-        
         subnetType: ec2.SubnetType.PRIVATE_ISOLATED // no se si es isolated o  whit egress
       },
       databaseName: 'skorify',
@@ -52,9 +64,27 @@ export class DatabaseStack extends cdk.Stack {
       });
     }
 
+    // Secreto auto-generado por RDS con las credenciales de admin (user/password).
+    // Lo publicamos en SSM para que lambdas u otros consumidores resuelvan el ARN
+    // sin depender de outputs cross-stack.
+    if (!this.database.secret) {
+      throw new Error('RDS instance did not generate a credentials secret');
+    }
+
+    new ssm.StringParameter(this, 'DbSecretArnParam', {
+      parameterName: `/skorify/${envName}/db-secret-arn`,
+      stringValue: this.database.secret.secretArn,
+      description: 'ARN del Secrets Manager secret con credenciales de la RDS',
+    });
+
     new cdk.CfnOutput(this, 'DBHost', {
       value: this.database.dbInstanceEndpointAddress,
       description: 'Host para el equipo de datos y backend',
+    });
+
+    new cdk.CfnOutput(this, 'DBSecretArn', {
+      value: this.database.secret.secretArn,
+      description: 'ARN del secreto con credenciales de la RDS',
     });
   }
 }
