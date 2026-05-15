@@ -17,7 +17,7 @@ export class createMatchesFlow extends Construct {
     super(scope, id);
 
     this.matchesByCompetitionLambda = new NodejsFunction(this, 'MatchesByCompetitionLambda', {
-      entry: path.join(__dirname, '..', '..', 'lambda', 'get-matches-by-competition.ts'),
+      entry: path.join(__dirname, '..', '..', 'lambdas', 'get-matches-by-competition.ts'),
       handler: 'handler',
       runtime: lambda.Runtime.NODEJS_20_X,
       timeout: cdk.Duration.minutes(1),
@@ -27,7 +27,7 @@ export class createMatchesFlow extends Construct {
     });
 
     this.saveMatchesLambda = new NodejsFunction(this, 'SaveMatchesLambda', {
-      entry: path.join(__dirname, '..', '..', 'lambda', 'save-matches.ts'),
+      entry: path.join(__dirname, '..', '..', 'lambdas', 'save-matches.ts'),
       handler: 'handler',
       runtime: lambda.Runtime.NODEJS_20_X,
       timeout: cdk.Duration.minutes(1)
