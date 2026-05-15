@@ -3,18 +3,8 @@ import { User as UserEntity } from "../../entities/User";
 import { BaseDataService } from "./base.service";
 
 export class UserService extends BaseDataService<UserEntity> {
-    constructor(private readonly repository: Repository<UserEntity>) {
-        super(UserEntity);
-    }
-
-    /**
-     * Creates a new user after schema validation.
-     */
-    async create(data: Partial<UserEntity>): Promise<UserEntity> {
-        await this.validateSchema(data);
-
-        const newUser = this.repository.create(data);
-        return await this.repository.save(newUser);
+    constructor(repository: Repository<UserEntity>) {
+        super(UserEntity, repository);
     }
 
     /**
@@ -29,14 +19,14 @@ export class UserService extends BaseDataService<UserEntity> {
     /**
      * Finds an active user by id.
      */
-    async findById(id: string): Promise<UserEntity | null> {
+    async getById(id: string): Promise<UserEntity | null> {
         return await this.repository.findOne({ where: { id, deleted_at: IsNull() } });
     }
 
     /**
      * Soft-deletes a user by id.
      */
-    async softDelete(id: string): Promise<void> {
+    async deleteById(id: string): Promise<void> {
         await this.repository.update(id, { deleted_at: new Date() });
     }
 }
