@@ -7,37 +7,53 @@ import { RdsScheduler } from './constructs/rds-scheduler';
 import { isProduction } from '../utils/conditionals';
 
 export class DatabaseStack extends cdk.Stack {
-  public readonly vpc: ec2.Vpc;
   public readonly database: rds.DatabaseInstance;
 
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
     super(scope, id, props);
 
-    // this.vpc = new ec2.Vpc(this, 'MyVPC', {
-    //   maxAzs: 2,
-    //   natGateways: 0,
-    //   subnetConfiguration: [
-    //     {
-    //       name: 'isolated',
-    //       subnetType: ec2.SubnetType.PRIVATE_ISOLATED,
-    //       cidrMask: 24,
-    //     },
-    //   ],
-    // });
+    
+    const vpc = ec2.Vpc.fromLookup(this, 'ImportedVPC', {
+      vpcName: 'VPC-SKORIFY-DEV', // cambiar por nombre de la vpc
+    });
 
-    // this.database = new rds.DatabaseInstance(this, 'skorifyDatabase', {
-    //   engine: rds.DatabaseInstanceEngine.MYSQL,
-    //   instanceType: ec2.InstanceType.of(ec2.InstanceClass.T3, ec2.InstanceSize.MEDIUM),
-    //   vpc: this.vpc,
-    //   vpcSubnets: { subnetType: ec2.SubnetType.PRIVATE_ISOLATED },
-    // });
+    
+    const dbSecurityGroup = ec2.SecurityGroup.fromSecurityGroupId(
+      this, 
+      'ImportedDBSecurityGroup', 
+      'sg-0123456789abcdef', // cambiar al id correcto
+      { mutable: true } 
+    );
 
-    if (!isProduction) {
-      new RdsScheduler(this, 'Scheduler', {
-        databaseInstance: this.database,
-        startSchedule: events.Schedule.cron({ minute: '0', hour: '21' }),
-        stopSchedule: events.Schedule.cron({ minute: '0', hour: '4' }),
-      });
-    }
+    dbSecurityGroup.addIngressRule(
+      ec2.Peer.ipv4(vpc.vpcCidrBlock),
+      ec2.Port.tcp(3306),
+      'Permitir conexión interna desde la VPC'
+    );
+
+    this.database = new rds.DatabaseInstance(this, 'skorifyDatabase', {
+      engine: rds.DatabaseInstanceEngine.mysql({ version: rds.MysqlEngineVersion.VER_8_0 }),
+      instanceType: ec2.InstanceType.of(ec2.InstanceClass.T3, ec2.InstanceSize.MICRO),
+      vpc,
+      securityGroups: [dbSecurityGroup], 
+      vpcSubnets: { 
+        
+        subnetType: ec2.SubnetType.PRIVATE_ISOLATED // no se si es isolated o  whit egress
+      },
+      databaseName: 'skorify',
+      removalPolicy: cdk.RemovalPolicy.SNAPSHOT, 
+    });
+
+    new RdsScheduler(this, 'RdsScheduler', {
+      databaseInstance: this.database,
+      startSchedule: events.Schedule.cron({ minute: '0', hour: '12', weekDay: 'MON-FRI' }),
+      stopSchedule: events.Schedule.cron({ minute: '0', hour: '1', weekDay: 'MON-FRI' }),
+    });
+
+    new cdk.CfnOutput(this, 'DBHost', {
+      value: this.database.dbInstanceEndpointAddress,
+      description: 'Host para el equipo de datos y backend',
+    });
   }
 }
+// Configuración de RDS para el proyecto Skorify
