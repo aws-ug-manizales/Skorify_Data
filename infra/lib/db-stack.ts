@@ -4,6 +4,7 @@ import * as ec2 from 'aws-cdk-lib/aws-ec2';
 import * as rds from 'aws-cdk-lib/aws-rds';
 import * as events from 'aws-cdk-lib/aws-events';
 import { RdsScheduler } from './constructs/rds-scheduler';
+import { isProduction } from '../utils/conditionals';
 
 export class DatabaseStack extends cdk.Stack {
   public readonly database: rds.DatabaseInstance;
@@ -43,11 +44,13 @@ export class DatabaseStack extends cdk.Stack {
       removalPolicy: cdk.RemovalPolicy.SNAPSHOT, 
     });
 
-    new RdsScheduler(this, 'RdsScheduler', {
-      databaseInstance: this.database,
-      startSchedule: events.Schedule.cron({ minute: '0', hour: '12', weekDay: 'MON-FRI' }),
-      stopSchedule: events.Schedule.cron({ minute: '0', hour: '1', weekDay: 'MON-FRI' }),
-    });
+    if (!isProduction) {
+      new RdsScheduler(this, 'RdsScheduler', {
+        databaseInstance: this.database,
+        startSchedule: events.Schedule.cron({ minute: '0', hour: '12', weekDay: 'MON-FRI' }),
+        stopSchedule: events.Schedule.cron({ minute: '0', hour: '1', weekDay: 'MON-FRI' }),
+      });
+    }
 
     new cdk.CfnOutput(this, 'DBHost', {
       value: this.database.dbInstanceEndpointAddress,
