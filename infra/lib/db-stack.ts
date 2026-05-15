@@ -55,3 +55,4 @@ export class DatabaseStack extends cdk.Stack {
     });
   }
 }
+// Configuración de RDS para el proyecto Skorify
