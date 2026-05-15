@@ -1,22 +1,28 @@
 import { EventBridgeClient, PutEventsCommand } from "@aws-sdk/client-eventbridge";
+import { BackendClient } from "./helpers/backend-client.js";
+import { createEventLogger } from "./helpers/logger.js";
+import type { MatchFinishedDetail } from "./helpers/types.js";
 
 const eventBridge = new EventBridgeClient();
 const EVENT_BUS_NAME = process.env.EVENT_BUS_NAME ?? "SkorifyDataBus";
+const BACKEND_URL = process.env.BACKEND_URL ?? "";
 
-function generateMatchDetail() {
-  return {
-    match_id: crypto.randomUUID(),
-    tournament_id: crypto.randomUUID(),
-    final_home_goals: Math.floor(Math.random() * 5),
-    final_away_goals: Math.floor(Math.random() * 4),
-    stage: Math.random() > 0.5 ? "group" : "finals",
-    timestamp: new Date().toISOString(),
-  };
+const logger = createEventLogger("WorkerLambda");
+
+function generateMockMatches(): MatchFinishedDetail[] {
+  return [
+    {
+      match_id: crypto.randomUUID(),
+      tournament_id: crypto.randomUUID(),
+      final_home_goals: Math.floor(Math.random() * 5),
+      final_away_goals: Math.floor(Math.random() * 4),
+      stage: Math.random() > 0.5 ? "group" : "finals",
+      timestamp: new Date().toISOString(),
+    },
+  ];
 }
 
-export const handler = async (): Promise<void> => {
-  const detail = generateMatchDetail();
-
+async function publishMatchFinished(detail: MatchFinishedDetail): Promise<void> {
   const command = new PutEventsCommand({
     Entries: [
       {
@@ -36,8 +42,50 @@ export const handler = async (): Promise<void> => {
 
   const result = await eventBridge.send(command);
 
-  console.log("Worker published 2 MatchFinished events with shared detail:", JSON.stringify(detail, null, 2));
-  console.log("  -> SkorifyData  -> SQS -> FinishMatch");
-  console.log("  -> SkorifyBackend -> Step Functions -> Ranking");
-  console.log("PutEvents result:", JSON.stringify(result));
+  if (result.FailedEntryCount && result.FailedEntryCount > 0) {
+    const failures = result.Entries?.filter((e) => e.ErrorMessage);
+    throw new Error(
+      `Failed to publish events: ${JSON.stringify(failures)}`
+    );
+  }
+}
+
+export const handler = async (): Promise<void> => {
+  logger.started("batch", "Worker checking for finished matches");
+
+  let matches: MatchFinishedDetail[];
+
+  if (BACKEND_URL) {
+    const client = new BackendClient({ baseUrl: BACKEND_URL });
+    const backendMatches = await client.getFinishedMatches();
+
+    matches = backendMatches.map((m) => ({
+      match_id: m.id,
+      tournament_id: m.tournament_id,
+      final_home_goals: m.home_goals,
+      final_away_goals: m.away_goals,
+      stage: m.stage,
+      timestamp: new Date().toISOString(),
+    }));
+
+    logger.success("batch", `Found ${matches.length} finished matches from backend`);
+  } else {
+    matches = generateMockMatches();
+    logger.success(
+      "batch",
+      `BACKEND_URL not set, using ${matches.length} mock match(es)`
+    );
+  }
+
+  for (const detail of matches) {
+    await publishMatchFinished(detail);
+    logger.success(
+      detail.match_id,
+      "Published MatchFinished to SkorifyData + SkorifyBackend",
+      {
+        tournament_id: detail.tournament_id,
+        stage: detail.stage,
+      }
+    );
+  }
 };

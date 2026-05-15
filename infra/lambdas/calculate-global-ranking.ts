@@ -1,24 +1,24 @@
+import { createEventLogger } from "./helpers/logger.js";
+import type { GlobalRankingOutput } from "./helpers/types.js";
+
+const logger = createEventLogger("CalculateGlobalRankingLambda");
+
 interface GlobalRankingInput {
   tournament_id: string;
   instances: Array<{
     instance_id: string;
     rank: number;
     total_points: number;
+    exact_hits: number;
+    outcome_hits: number;
   }>;
-}
-
-interface GlobalRankingOutput {
-  tournament_id: string;
-  leaderboard: Array<{
-    instance_id: string;
-    position: number;
-    total_points: number;
-  }>;
-  calculated_at: string;
 }
 
 export const handler = async (event: GlobalRankingInput) => {
-  console.log("calculateGlobalRanking received:", JSON.stringify(event, null, 2));
+  logger.started("batch", "Calculating global ranking", {
+    tournament_id: event.tournament_id,
+    instance_count: (event.instances ?? []).length,
+  });
 
   const leaderboard = (event.instances ?? [])
     .sort((a, b) => b.total_points - a.total_points)
@@ -34,6 +34,9 @@ export const handler = async (event: GlobalRankingInput) => {
     calculated_at: new Date().toISOString(),
   };
 
-  console.log("Global ranking result:", JSON.stringify(output, null, 2));
+  logger.success("batch", "Global ranking calculated", {
+    leader_count: leaderboard.length,
+  });
+
   return output;
 };

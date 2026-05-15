@@ -14,6 +14,7 @@ import {
   DetailTypes,
   QUEUE_DEFAULTS,
   LAMBDA_DEFAULTS,
+  ENV,
 } from "./constants";
 
 export class MatchProcessingStack extends cdk.Stack {
@@ -21,6 +22,11 @@ export class MatchProcessingStack extends cdk.Stack {
 
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
     super(scope, id, props);
+
+    const backendUrl =
+      this.node.tryGetContext("backendUrl") ??
+      process.env.BACKEND_URL ??
+      "";
 
     this.bus = new events.EventBus(this, "SkorifyDataBus", {
       eventBusName: SKORIFY_DATA_BUS,
@@ -51,13 +57,15 @@ export class MatchProcessingStack extends cdk.Stack {
       });
 
     const workerLambda = createLambda("WorkerLambda", "lambdas/worker.ts");
-    workerLambda.addEnvironment("EVENT_BUS_NAME", this.bus.eventBusName);
+    workerLambda.addEnvironment(ENV.EVENT_BUS_NAME, this.bus.eventBusName);
+    workerLambda.addEnvironment(ENV.BACKEND_URL, backendUrl);
     this.bus.grantPutEventsTo(workerLambda);
 
     const finishMatchLambda = createLambda(
       "FinishMatchLambda",
       "lambdas/finish-match.ts"
     );
+    finishMatchLambda.addEnvironment(ENV.BACKEND_URL, backendUrl);
     finishMatchLambda.addEventSource(
       new sources.SqsEventSource(finishMatchQueue, { batchSize: 10 })
     );
@@ -66,6 +74,7 @@ export class MatchProcessingStack extends cdk.Stack {
       "NotifyUsersLambda",
       "lambdas/notify-users.ts"
     );
+    notifyUsersLambda.addEnvironment(ENV.BACKEND_URL, backendUrl);
     notifyUsersLambda.addEventSource(
       new sources.SqsEventSource(notifyUserQueue, { batchSize: 10 })
     );
@@ -97,11 +106,13 @@ export class MatchProcessingStack extends cdk.Stack {
       "GetTournamentInstancesLambda",
       "lambdas/get-tournament-instances.ts"
     );
+    getInstancesLambda.addEnvironment(ENV.BACKEND_URL, backendUrl);
 
     const calcInstanceLambda = createLambda(
       "CalculateInstanceRankingLambda",
       "lambdas/calculate-instance-ranking.ts"
     );
+    calcInstanceLambda.addEnvironment(ENV.BACKEND_URL, backendUrl);
 
     const calcGlobalLambda = createLambda(
       "CalculateGlobalRankingLambda",
@@ -123,6 +134,14 @@ export class MatchProcessingStack extends cdk.Stack {
       {
         lambdaFunction: calcInstanceLambda,
         outputPath: "$.Payload",
+      }
+    ).addCatch(
+      new sfn.Pass(this, "SkipFailedInstance", {
+        result: sfn.Result.fromObject({ skipped: true, error: "Instance ranking failed" }),
+      }),
+      {
+        errors: [sfn.Errors.ALL],
+        resultPath: "$.errorInfo",
       }
     );
 

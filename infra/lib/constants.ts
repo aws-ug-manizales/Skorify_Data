@@ -15,10 +15,15 @@ export const DetailTypes = {
 
 export const QUEUE_DEFAULTS = {
   maxReceiveCount: 3,
-  visibilityTimeout: Duration.seconds(60),
+  visibilityTimeout: Duration.seconds(90),
 };
 
 export const LAMBDA_DEFAULTS = {
   runtime: Runtime.NODEJS_22_X,
   timeout: Duration.seconds(30),
 };
+
+export const ENV = {
+  BACKEND_URL: "BACKEND_URL",
+  EVENT_BUS_NAME: "EVENT_BUS_NAME",
+} as const;
