@@ -10,5 +10,10 @@ const env = {
   region: process.env.CDK_DEFAULT_REGION,
 };
 
-new DatabaseStack(app, "skorifyDatabase", { env });
+// Resuelve el ambiente desde `cdk -c env=<name>` o de la variable ENV_NAME.
+// Default: dev. Se usa para indexar parámetros en SSM (/skorify/<env>/...).
+const envName: string =
+  app.node.tryGetContext("env") ?? process.env.ENV_NAME ?? "dev";
+
+new DatabaseStack(app, `skorifyDatabase`, { env, envName });
 new MatchProcessingStack(app, "skorifyEventBridge", { env });
