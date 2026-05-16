@@ -3,6 +3,10 @@ import {
     GetSecretValueCommand,
     SecretsManagerClient,
 } from '@aws-sdk/client-secrets-manager';
+import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
+import { DynamoDBDocumentClient, PutCommand } from '@aws-sdk/lib-dynamodb';
+
+const ddb = DynamoDBDocumentClient.from(new DynamoDBClient({}));
 
 interface RdsSecret {
     username: string;
@@ -70,8 +74,24 @@ export const handler = async (event: any): Promise<void> => {
         await dbClient.connect();
         console.log('DB client connected successfully.');
         const matchData = parseEvent(event);
-        await dbClient.matches.create(matchData);
-        console.log('Match data saved successfully.');
+        const saved = await dbClient.matches.save(matchData);
+        console.log('Match data saved successfully, postgresId:', saved.id);
+
+        const table = process.env.MATCH_MAPPING_TABLE;
+        if (table && matchData.id !== undefined && matchData.id !== null) {
+            await ddb.send(
+                new PutCommand({
+                    TableName: table,
+                    Item: {
+                        fdataId: String(matchData.id),
+                        postgresId: saved.id,
+                    },
+                }),
+            );
+            console.log(
+                `Mapping written: fdataId=${matchData.id} -> postgresId=${saved.id}`,
+            );
+        }
     } catch (error) {
         console.error('Error saving match data:', error);
         throw error;

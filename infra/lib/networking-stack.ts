@@ -52,7 +52,13 @@ export class NetworkingStack extends cdk.Stack {
     // Configurado en una sola AZ para ahorrar costo (~$7/mes vs ~$15/mes en 2 AZ).
     this.vpc.addInterfaceEndpoint('SecretsManagerEndpoint', {
       service: ec2.InterfaceVpcEndpointAwsService.SECRETS_MANAGER,
-      subnets: { subnets: [this.vpc.isolatedSubnets[0]] },
+      subnets: { subnets: [this.vpc.isolatedSubnets[0]!] },
+    });
+
+    // Gateway Endpoint para DynamoDB: ruta en las route tables de la VPC.
+    // Es gratis (no cobra ni por hora ni por GB), no requiere ENIs ni SG.
+    this.vpc.addGatewayEndpoint('DynamoDbEndpoint', {
+      service: ec2.GatewayVpcEndpointAwsService.DYNAMODB,
     });
 
     new ssm.StringParameter(this, 'VpcNameParam', {
