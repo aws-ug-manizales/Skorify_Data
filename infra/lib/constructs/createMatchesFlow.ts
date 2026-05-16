@@ -1,6 +1,7 @@
 import * as cdk from 'aws-cdk-lib';
 import { Construct } from 'constructs';
 import * as ec2 from 'aws-cdk-lib/aws-ec2';
+import * as iam from 'aws-cdk-lib/aws-iam';
 import * as lambda from 'aws-cdk-lib/aws-lambda';
 import { NodejsFunction } from 'aws-cdk-lib/aws-lambda-nodejs';
 import * as path from 'path';
@@ -43,6 +44,13 @@ export class createMatchesFlow extends Construct {
         DB_SECRET_ARN: props.dbSecretArn,
       }
     });
+
+    this.saveMatchesLambda.addToRolePolicy(
+      new iam.PolicyStatement({
+        actions: ['secretsmanager:GetSecretValue'],
+        resources: [props.dbSecretArn],
+      }),
+    );
 
     const getMatchesTask = new sfnTasks.LambdaInvoke(this, 'GetMatchesByCompetition', {
       lambdaFunction: this.matchesByCompetitionLambda,

@@ -38,6 +38,7 @@ async function buildDbClient(): Promise<DBClient> {
             database: secret.dbname ?? process.env.DB_NAME ?? 'polla_mundial',
             username: secret.username,
             password: secret.password,
+            ssl: { rejectUnauthorized: false },
         });
     }
 
@@ -68,7 +69,7 @@ export const handler = async (event: any): Promise<void> => {
     try {
         await dbClient.connect();
         console.log('DB client connected successfully.');
-        const matchData = JSON.parse(event);
+        const matchData = parseEvent(event);
         await dbClient.matches.create(matchData);
         console.log('Match data saved successfully.');
     } catch (error) {
@@ -77,4 +78,16 @@ export const handler = async (event: any): Promise<void> => {
     } finally {
         await dbClient.disconnect();
     }
+};
+
+const parseEvent = (event: any): any => {
+    if (typeof event === 'string') {
+        try {
+            return JSON.parse(event);
+        } catch (error) {
+            console.error('Error parsing event string:', error);
+            throw new Error('Invalid event format');
+        }
+    }
+    return event;
 };
