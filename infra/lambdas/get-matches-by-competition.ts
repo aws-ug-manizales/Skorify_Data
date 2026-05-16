@@ -12,13 +12,14 @@ export const handler = async (event: any): Promise<any> => {
         console.log(`Fetched ${matches.length} matches for competition ID: ${competitionId}`);
         return {
             statusCode: 200,
-            body: JSON.stringify(matches),
+            matches: matches,
         };
     } catch (error) {
         console.error(`Error fetching matches for competition ID ${competitionId}:`, error);
         return {
             statusCode: 500,
-            body: JSON.stringify({ error: "Failed to fetch matches" }),
+            matches: [],
+            error: "Failed to fetch matches",
         };
     }
 };

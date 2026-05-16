@@ -1,5 +1,6 @@
 import * as cdk from "aws-cdk-lib";
 import { Construct } from "constructs";
+import * as ec2 from "aws-cdk-lib/aws-ec2";
 import * as events from "aws-cdk-lib/aws-events";
 import * as targets from "aws-cdk-lib/aws-events-targets";
 import * as sqs from "aws-cdk-lib/aws-sqs";
@@ -7,6 +8,7 @@ import * as nodejs from "aws-cdk-lib/aws-lambda-nodejs";
 import * as sources from "aws-cdk-lib/aws-lambda-event-sources";
 import * as sfn from "aws-cdk-lib/aws-stepfunctions";
 import * as sfnTasks from "aws-cdk-lib/aws-stepfunctions-tasks";
+import * as ssm from "aws-cdk-lib/aws-ssm";
 import { Duration } from "aws-cdk-lib";
 import {
   SKORIFY_DATA_BUS,
@@ -15,12 +17,31 @@ import {
   QUEUE_DEFAULTS,
   LAMBDA_DEFAULTS,
 } from "./constants";
+import { createMatchesFlow } from "./constructs/createMatchesFlow";
+
+export interface MatchProcessingStackProps extends cdk.StackProps {
+  envName: string;
+}
 
 export class MatchProcessingStack extends cdk.Stack {
   public readonly bus: events.EventBus;
 
-  constructor(scope: Construct, id: string, props?: cdk.StackProps) {
+  constructor(scope: Construct, id: string, props: MatchProcessingStackProps) {
     super(scope, id, props);
+
+    const { envName } = props;
+
+    const vpcName = ssm.StringParameter.valueFromLookup(
+      this,
+      `/skorify/${envName}/vpc-name`,
+    );
+
+    const dbSecretArn = ssm.StringParameter.valueFromLookup(
+      this,
+      `/skorify/${envName}/db-secret-arn`,
+    );
+
+    const vpc = ec2.Vpc.fromLookup(this, "ImportedVpc", { vpcName });
 
     this.bus = new events.EventBus(this, "SkorifyDataBus", {
       eventBusName: SKORIFY_DATA_BUS,
@@ -160,5 +181,7 @@ export class MatchProcessingStack extends cdk.Stack {
       },
       targets: [new targets.SfnStateMachine(rankingStateMachine)],
     });
+
+    new createMatchesFlow(this, "CreateMatchesFlow", { vpc, dbSecretArn });
   }
 }

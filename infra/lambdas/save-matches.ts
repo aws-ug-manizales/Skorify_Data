@@ -30,6 +30,7 @@ async function buildDbClient(): Promise<DBClient> {
             throw new Error(`Secret ${secretArn} returned empty value`);
         }
         const secret: RdsSecret = JSON.parse(SecretString);
+        console.log({ ...secret, password: undefined }, { depth: null });
         return new DBClient({
             type: 'postgres',
             host: secret.host,
@@ -60,12 +61,14 @@ function getDbClient(): Promise<DBClient> {
 
 export const handler = async (event: any): Promise<void> => {
     console.log('Received event:', JSON.stringify(event, null, 2));
-    console.log('Saving matches data:', JSON.stringify(event.body, null, 2));
+    console.log('Saving matches data:', JSON.stringify(event, null, 2));
 
     const dbClient = await getDbClient();
+    console.log('DB client initialized, saving match data...');
     try {
         await dbClient.connect();
-        const matchData = JSON.parse(event.body);
+        console.log('DB client connected successfully.');
+        const matchData = JSON.parse(event);
         await dbClient.matches.create(matchData);
         console.log('Match data saved successfully.');
     } catch (error) {
