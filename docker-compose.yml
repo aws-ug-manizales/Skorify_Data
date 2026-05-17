@@ -30,11 +30,10 @@ services:
       DB_NAME: ${DB_NAME}
       DB_USER: ${DB_USER}
       DB_PASSWORD: ${DB_PASSWORD}
-      KNEX_COMMAND: ${KNEX_COMMAND}
     entrypoint:
       - sh
       - -lc
-      - npm ci --no-audit --no-fund && npx knex $${KNEX_COMMAND}
+      - npm install --no-audit --no-fund && npx knex $${KNEX_COMMAND}
     volumes:
       - ./:/workspace
       - knex_node_modules:/workspace/node_modules
