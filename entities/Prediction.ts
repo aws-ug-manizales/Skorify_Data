@@ -29,6 +29,9 @@ export class Prediction {
   @Column({ type: 'int' })
   pred_away_goals!: number;
 
+  @Column({ type: 'boolean', nullable: false, default: false })
+  is_exact_hit!: boolean;
+
   @Column({ type: 'int', default: 0 })
   earned_points!: number;
 
