@@ -12,6 +12,7 @@ import type { Tournament } from './Tournament';
 import type { User } from './User';
 import type { InstanceUser } from './InstanceUser';
 import type { InstanceRule } from './InstanceRule';
+import { Leaderboard } from '../lib';
 
 @Entity('instances')
 export class Instance {
@@ -63,6 +64,9 @@ export class Instance {
 
   @OneToMany('InstanceUser', 'instance')
   instance_users!: InstanceUser[];
+
+  @OneToMany('Leaderboard', 'instance')
+  leaderboard!: Leaderboard[];
 
   @OneToMany('InstanceRule', 'instance')
   instance_rules!: InstanceRule[];
