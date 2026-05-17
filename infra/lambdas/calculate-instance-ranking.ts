@@ -1,29 +1,62 @@
-interface InstanceItem {
-  id: string;
-  name: string;
-  tournament_id: string;
-  state: string;
-}
+import { AppDataSource } from '../utils/database';
+import { Prediction, Leaderboard } from '../../../entities'; 
 
-interface CalcResult {
-  instance_id: string;
-  rank: number;
-  total_points: number;
-  exact_hits: number;
-  outcome_hits: number;
-}
 
-export const handler = async (event: InstanceItem) => {
-  console.log("calculateInstanceRanking received:", JSON.stringify(event, null, 2));
+export const handler = async (event: any) => {
+    console.log("Calculando puntos reales para instancia:", event.id);
+    
+    try {
+        if (!AppDataSource.isInitialized) {
+            await AppDataSource.initialize();
+        }
+        
+        
+        const { id: instance_id, match_id, final_home_goals, final_away_goals } = event;
 
-  const result: CalcResult = {
-    instance_id: event.id,
-    rank: Math.floor(Math.random() * 10) + 1,
-    total_points: Math.floor(Math.random() * 50),
-    exact_hits: Math.floor(Math.random() * 5),
-    outcome_hits: Math.floor(Math.random() * 10),
-  };
+        const predictionRepo = AppDataSource.getRepository(Prediction);
+        const leaderboardRepo = AppDataSource.getRepository(Leaderboard);
 
-  console.log(`Ranking calculated for instance ${event.name}:`, JSON.stringify(result, null, 2));
-  return result;
+        
+        const predictions = await predictionRepo.find({ 
+            where: { 
+                instance_id: instance_id, 
+                match_id: match_id 
+            } 
+        });
+
+        
+        for (const pred of predictions) {
+            let puntosGanados = 0;
+
+            // 3 puntos resultado exacto, 1 punto si solo acertó ganador/empate
+            if (pred.home_goals === final_home_goals && pred.away_goals === final_away_goals) {
+                puntosGanados = 3;
+            } else if (
+                Math.sign(pred.home_goals - pred.away_goals) === 
+                Math.sign(final_home_goals - final_away_goals)
+            ) {
+                puntosGanados = 1;
+            }
+
+            if (puntosGanados > 0) {
+                // Actualizar el leaderboard en la DB
+                await leaderboardRepo.increment(
+                    { instance_id: instance_id, user_id: pred.user_id }, 
+                    "points", 
+                    puntosGanados
+                );
+            }
+        }
+
+        return { 
+            instance_id, 
+            status: "success", 
+            processed_at: new Date().toISOString(),
+            match_id 
+        };
+
+    } catch (error) {
+        console.error("Error calculando ranking:", error);
+        throw error;
+    }
 };
