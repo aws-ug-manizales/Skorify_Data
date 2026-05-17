@@ -23,9 +23,6 @@ export class TournamentInstance {
   @Column({ type: 'uuid' })
   owner_user_id!: string;
 
-  @Column({ type: 'uuid', nullable: true })
-  validator_user_id!: string | null;
-
   @Column({
     type: 'enum',
     enum: ['approved', 'pending', 'denied'],

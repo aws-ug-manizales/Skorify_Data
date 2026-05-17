@@ -13,7 +13,7 @@ import { User } from './User';
 import { TournamentInstance } from './TournamentInstance';
 import { Prediction } from './Prediction';
 
-@Entity('user_enrrollments')
+@Entity('user_enrollments')
 @Unique(['player_id', 'tournament_instance_id'])
 export class UserEnrollment {
   @PrimaryGeneratedColumn('uuid')
@@ -45,6 +45,9 @@ export class UserEnrollment {
 
   @UpdateDateColumn({ type: 'timestamptz', nullable: true, default: null })
   updated_at!: Date | null;
+
+  @UpdateDateColumn({ type: 'timestamptz', nullable: true, default: null })
+  joined_at!: Date | null;
 
   @ManyToOne(() => User, (u) => u.user_enrollments, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'player_id' })

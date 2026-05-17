@@ -48,7 +48,7 @@ export class Match {
 
   @Column({
     type: 'enum',
-    enum: ['scheduled', 'in_progress', 'finished'],
+    enum: ['scheduled', 'in_progress', 'finished','draft'],
     default: 'scheduled',
   })
   @IsOptional()

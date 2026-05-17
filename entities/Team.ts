@@ -9,7 +9,7 @@ import {
   ManyToOne,
 } from 'typeorm';
 import type { Match } from './Match';
-import { Tournament } from '../lib';
+import type { Tournament } from './Tournament';
 
 @Entity('teams')
 export class Team {

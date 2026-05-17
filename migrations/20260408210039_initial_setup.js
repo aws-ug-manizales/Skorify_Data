@@ -30,7 +30,7 @@ exports.up = async function (knex) {
     t.uuid('id').primary().defaultTo(knex.fn.uuid());
     t.string('name').notNullable();
     t.string('shield_url');
-    t.uuid('tournament_id').notNullable().references('id').inTable('tournaments');
+    t.uuid('tournament_id').notNullable().references('id').inTable('tournaments').onDelete('CASCADE');
     t.timestamp("created_at", { useTz: true }).defaultTo(knex.fn.now());
     t.timestamp("updated_at", { useTz: true }).defaultTo(null);
     t.timestamp("deleted_at", { useTz: true }).defaultTo(null);
@@ -43,8 +43,8 @@ exports.up = async function (knex) {
     t.uuid('away_team_id').notNullable().references('id').inTable('teams').onDelete('CASCADE');
     t.uuid('tournament_id').notNullable().references('id').inTable('tournaments').onDelete('CASCADE');
     t.timestamp('kick_off').notNullable();
-    t.integer('home_goals');
-    t.integer('away_goals');
+    t.integer('home_score');
+    t.integer('away_score');
     t.enu('status', ['scheduled', 'in_progress', 'finished','draft']).notNullable().defaultTo('scheduled');
     t.enu('stage', ['group', 'finals']).notNullable().defaultTo('group');
     t.timestamp("created_at", { useTz: true }).defaultTo(knex.fn.now());
@@ -68,26 +68,28 @@ exports.up = async function (knex) {
   await knex.schema.createTable('user_enrollments', (t) => {
     t.uuid('id').primary().defaultTo(knex.fn.uuid());
     t.uuid('player_id').notNullable().references('id').inTable('users').onDelete('CASCADE');
-    t.uuid('instance_id').notNullable().references('id').inTable('tournament_instances').onDelete('CASCADE');
+    t.uuid('tournament_instance_id').notNullable().references('id').inTable('tournament_instances').onDelete('CASCADE');
     t.integer('current_position');
     t.integer('last_position');
     t.integer('current_score').defaultTo(0);
+    t.integer('exact_hits').defaultTo(0);
     t.integer('streak').defaultTo(0);
     t.timestamp("joined_at", { useTz: true }).defaultTo(knex.fn.now());
     t.timestamp("created_at", { useTz: true }).defaultTo(knex.fn.now());
-    t.unique(['player_id', 'instance_id']);
+    t.timestamp("updated_at", { useTz: true }).defaultTo(null);
+    t.unique(['player_id', 'tournament_instance_id']);
   });
 
   // ── Predictions ──
   await knex.schema.createTable('predictions', (t) => {
     t.uuid('id').primary().defaultTo(knex.fn.uuid());
-    t.uuid('instance_player_id').notNullable().references('id').inTable('user_enrollments').onDelete('CASCADE');
+    t.uuid('user_enrollment_id').notNullable().references('id').inTable('user_enrollments').onDelete('CASCADE');
     t.uuid('match_id').notNullable().references('id').inTable('matches').onDelete('CASCADE');
     t.integer('pred_home_goals').notNullable();
     t.integer('pred_away_goals').notNullable();
     t.integer('earned_points').defaultTo(0);
     t.boolean('has_exact_result').defaultTo(false);
-    t.unique(['instance_player_id', 'match_id']);
+    t.unique(['user_enrollment_id', 'match_id']);
     t.timestamp("created_at", { useTz: true }).defaultTo(knex.fn.now());
     t.timestamp("updated_at", { useTz: true }).defaultTo(null);
     t.timestamp("deleted_at", { useTz: true }).defaultTo(null);
