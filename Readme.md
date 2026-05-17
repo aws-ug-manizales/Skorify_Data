@@ -48,7 +48,7 @@ erDiagram
     TOURNAMENT_INSTANCE {
         uuid id PK
         uuid tournament_id FK
-        uuid owner_id FK
+        uuid owner_user_id FK
         string name
         TournamentState state
         date created_at
@@ -58,7 +58,7 @@ erDiagram
 
     USER_ENROLLMENT {
         uuid id PK
-        uuid user_id FK
+        uuid player_id FK
         uuid instance_id FK
         date joined_at
         number last_position
