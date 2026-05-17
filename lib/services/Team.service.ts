@@ -17,10 +17,6 @@ export class TeamService extends BaseDataService<Team> {
         return await this.repository.findOne({ where: { id, deleted_at: IsNull() } });
     }
 
-    async findByCode(code: string): Promise<Team | null> {
-        return await this.repository.findOne({ where: { code, deleted_at: IsNull() } });
-    }
-
     async findAllActive(): Promise<Team[]> {
         return await this.repository.find({ where: { deleted_at: IsNull() } });
     }
