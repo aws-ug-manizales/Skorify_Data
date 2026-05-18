@@ -73,18 +73,22 @@ export class Match {
   @IsOptional()
   updated_at?: Date | null;
 
+  @IsOptional()
   @ManyToOne('Team', 'home_matches', { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'home_team_id' })
   home_team!: Team;
 
+  @IsOptional()
   @ManyToOne('Team', 'away_matches', { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'away_team_id' })
   away_team!: Team;
   
+  @IsOptional()
   @ManyToOne('Tournament', 'matches', { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'tournament_id' })
   tournament!: Tournament;
   
+  @IsOptional()
   @OneToMany('Prediction', 'match')
   predictions!: Prediction[];
 }
