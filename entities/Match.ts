@@ -39,21 +39,21 @@ export class Match {
   @Column({ type: 'int', nullable: true })
   @IsOptional()
   @IsInt()
-  home_goals?: number | null;
+  home_score?: number | null;
 
   @Column({ type: 'int', nullable: true })
   @IsOptional()
   @IsInt()
-  away_goals?: number | null;
+  away_score?: number | null;
 
   @Column({
     type: 'enum',
-    enum: ['scheduled', 'in_progress', 'finished'],
+    enum: ['scheduled', 'in_progress', 'finished','draft'],
     default: 'scheduled',
   })
   @IsOptional()
-  @IsIn(['scheduled', 'in_progress', 'finished'])
-  status?: 'scheduled' | 'in_progress' | 'finished';
+  @IsIn(['scheduled', 'in_progress', 'finished', 'draft'])
+  status?: 'scheduled' | 'in_progress' | 'finished' | 'draft';
 
   @Column({
     type: 'enum',
@@ -64,9 +64,6 @@ export class Match {
   @IsIn(['group', 'finals'])
   stage?: 'group' | 'finals';
 
-  @Column({ type: 'varchar', nullable: true })
-  @IsOptional()
-  venue?: string | null;
 
   @CreateDateColumn({ type: 'timestamptz' })
   @IsOptional()
@@ -76,4 +73,18 @@ export class Match {
   @IsOptional()
   updated_at?: Date | null;
 
+  @ManyToOne('Team', 'home_matches', { onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'home_team_id' })
+  home_team!: Team;
+
+  @ManyToOne('Team', 'away_matches', { onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'away_team_id' })
+  away_team!: Team;
+  
+  @ManyToOne('Tournament', 'matches', { onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'tournament_id' })
+  tournament!: Tournament;
+  
+  @OneToMany('Prediction', 'match')
+  predictions!: Prediction[];
 }

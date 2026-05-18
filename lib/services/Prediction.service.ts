@@ -15,10 +15,6 @@ export class PredictionService extends BaseDataService<Prediction> {
         return await this.repository.find({ where: { match_id, deleted_at: IsNull() } });
     }
 
-    async findByInstancePlayerId(instance_player_id: string): Promise<Prediction[]> {
-        return await this.repository.find({ where: { instance_player_id, deleted_at: IsNull() } });
-    }
-
     async updateEarnedPoints(id: string, earned_points: number): Promise<void> {
         await this.repository.update(id, { earned_points });
     }

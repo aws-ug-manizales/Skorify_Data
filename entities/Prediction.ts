@@ -8,17 +8,17 @@ import {
   JoinColumn,
   Unique,
 } from 'typeorm';
-import type { InstanceUser } from './InstanceUser';
+import type { UserEnrollment } from './UserEnrollment';
 import type { Match } from './Match';
 
 @Entity('predictions')
-@Unique(['instance_player_id', 'match_id'])
+@Unique(['user_enrollment_id', 'match_id'])
 export class Prediction {
   @PrimaryGeneratedColumn('uuid')
   id!: string;
 
   @Column({ type: 'uuid' })
-  instance_player_id!: string;
+  user_enrollment_id!: string;
 
   @Column({ type: 'uuid' })
   match_id!: string;
@@ -32,6 +32,9 @@ export class Prediction {
   @Column({ type: 'int', default: 0 })
   earned_points!: number;
 
+  @Column({ type: 'boolean', default: false })
+  has_exact_result!: boolean;
+
   @CreateDateColumn({ type: 'timestamptz' })
   created_at!: Date;
 
@@ -41,9 +44,9 @@ export class Prediction {
   @Column({ type: 'timestamptz', nullable: true, default: null })
   deleted_at!: Date | null;
 
-  @ManyToOne('InstanceUser', 'predictions', { onDelete: 'CASCADE' })
-  @JoinColumn({ name: 'instance_player_id' })
-  instance_player!: InstanceUser;
+  @ManyToOne('UserEnrollment', 'predictions', { onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'user_enrollment_id' })
+  user_enrollment!: UserEnrollment;
 
   @ManyToOne('Match', 'predictions', { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'match_id' })
