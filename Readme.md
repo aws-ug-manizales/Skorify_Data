@@ -19,6 +19,7 @@ erDiagram
         string name
         string email
         string avatar_url
+        enum role
         date created_at
         date updated_at
         date deleted_at
@@ -37,12 +38,10 @@ erDiagram
     TOURNAMENT {
         uuid id PK
         string name
+        string token
         date start_date
         date end_date
-        string token
         date created_at
-        date updated_at
-        date deleted_at
     }
 
     TOURNAMENT_INSTANCE {
@@ -59,12 +58,15 @@ erDiagram
     USER_ENROLLMENT {
         uuid id PK
         uuid player_id FK
-        uuid instance_id FK
-        date joined_at
+        uuid tournament_instance_id FK
         number last_position
         number current_position
         number current_score
+        number exact_hits
         number streak
+        date created_at
+        date updated_at
+        date joined_at
     }
 
     MATCH {
@@ -79,29 +81,28 @@ erDiagram
         MatchStage stage
         date created_at
         date updated_at
-        date deleted_at
     }
 
     PREDICTION {
         uuid id PK
+        uuid user_enrollment_id FK
         uuid match_id FK
-        uuid enrollment_id FK
-        number home_score
-        number away_score
+        number pred_home_goals
+        number pred_away_goals
         number earned_points
+        bool has_exact_result
         date created_at
         date updated_at
         date deleted_at
-        bool has_exact_result
     }
 
     %% Relaciones
-    USER ||--o{ TOURNAMENT_INSTANCE : "owner_id"
-    USER ||--o{ USER_ENROLLMENT : "user_id"
+    USER ||--o{ TOURNAMENT_INSTANCE : "owner_user_id"
+    USER ||--o{ USER_ENROLLMENT : "player_id"
     TOURNAMENT ||--o{ TEAM : "tournament_id"
     TOURNAMENT ||--o{ TOURNAMENT_INSTANCE : "tournament_id"
-    TOURNAMENT_INSTANCE ||--o{ USER_ENROLLMENT : "instance_id"
-    USER_ENROLLMENT ||--o{ PREDICTION : "enrollment_id"
+    TOURNAMENT_INSTANCE ||--o{ USER_ENROLLMENT : "tournament_instance_id"
+    USER_ENROLLMENT ||--o{ PREDICTION : "user_enrollment_id"
     TOURNAMENT ||--o{ MATCH : "tournament_id"
     TEAM ||--o{ MATCH : "home_away_team_id"
     MATCH ||--o{ PREDICTION : "match_id"
@@ -241,19 +242,12 @@ La librería expone progresivamente cada entidad como un servicio que extiende `
 | Entidad | Archivo de entidad | Servicio | Estado |
 |---|---|---|---|
 | User | [entities/User.ts](entities/User.ts) | [lib/services/User.service.ts](lib/services/User.service.ts) | Disponible |
-| Match | [entities/Match.ts](entities/Match.ts) | [lib/services/Match.service.ts](lib/services/Match.service.ts) | Disponible |
 | Tournament | [entities/Tournament.ts](entities/Tournament.ts) | [lib/services/Tournament.service.ts](lib/services/Tournament.service.ts) | Disponible |
 | Team | [entities/Team.ts](entities/Team.ts) | [lib/services/Team.service.ts](lib/services/Team.service.ts) | Disponible |
-| TournamentTeam | [entities/TournamentTeam.ts](entities/TournamentTeam.ts) | [lib/services/TournamentTeam.service.ts](lib/services/TournamentTeam.service.ts) | Disponible |
-| Group | [entities/Group.ts](entities/Group.ts) | [lib/services/Group.service.ts](lib/services/Group.service.ts) | Disponible |
-| GroupTeam | [entities/GroupTeam.ts](entities/GroupTeam.ts) | [lib/services/GroupTeam.service.ts](lib/services/GroupTeam.service.ts) | Disponible |
+| Match | [entities/Match.ts](entities/Match.ts) | [lib/services/Match.service.ts](lib/services/Match.service.ts) | Disponible |
+| TournamentInstance | [entities/TournamentInstance.ts](entities/TournamentInstance.ts) | [lib/services/TournamentInstance.service.ts](lib/services/TournamentInstance.service.ts) | Disponible |
+| UserEnrollment | [entities/UserEnrollment.ts](entities/UserEnrollment.ts) | [lib/services/UserEnrollment.service.ts](lib/services/UserEnrollment.service.ts) | Disponible |
 | Prediction | [entities/Prediction.ts](entities/Prediction.ts) | [lib/services/Prediction.service.ts](lib/services/Prediction.service.ts) | Disponible |
-| Payment | [entities/Payment.ts](entities/Payment.ts) | [lib/services/Payment.service.ts](lib/services/Payment.service.ts) | Disponible |
-| Leaderboard | [entities/Leaderboard.ts](entities/Leaderboard.ts) | [lib/services/Leaderboard.service.ts](lib/services/Leaderboard.service.ts) | Disponible |
-| Rule | [entities/Rule.ts](entities/Rule.ts) | [lib/services/Rule.service.ts](lib/services/Rule.service.ts) | Disponible |
-| Instance | [entities/Instance.ts](entities/Instance.ts) | [lib/services/Instance.service.ts](lib/services/Instance.service.ts) | Disponible |
-| InstanceUser | [entities/InstanceUser.ts](entities/InstanceUser.ts) | [lib/services/InstanceUser.service.ts](lib/services/InstanceUser.service.ts) | Disponible |
-| InstanceRule | [entities/InstanceRule.ts](entities/InstanceRule.ts) | [lib/services/InstanceRule.service.ts](lib/services/InstanceRule.service.ts) | Disponible |
 
 ## En caso de romperlo todo
 ```bash

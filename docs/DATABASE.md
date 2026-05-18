@@ -15,6 +15,7 @@ Representa a los usuarios del sistema.
 - `name` (string): Nombre del usuario
 - `email` (string): Correo electrónico (único)
 - `avatar_url` (string): Imagen de perfil
+- `role` (enum): Rol del usuario (`general` | `admin`)
 - `created_at` (date): Fecha de creación
 - `updated_at` (date): Fecha de actualización
 - `deleted_at` (date): Fecha de eliminación lógica
@@ -27,12 +28,10 @@ Representa torneos en los que se realizan apuestas.
 **Atributos:**
 - `id` (PK, uuid): Identificador único
 - `name` (string): Nombre del torneo
+- `token` (string): Token de acceso al torneo
 - `start_date` (date): Fecha de inicio
 - `end_date` (date): Fecha de finalización
-- `token` (string): Token de acceso al torneo
 - `created_at` (date): Fecha de creación
-- `updated_at` (date): Fecha de actualización
-- `deleted_at` (date): Fecha de eliminación lógica
 
 ---
 
@@ -56,7 +55,7 @@ Representa una polla o pool dentro de un torneo, creada por un usuario.
 **Atributos:**
 - `id` (PK, uuid): Identificador único
 - `tournament_id` (FK → TOURNAMENT): Torneo al que pertenece
-- `owner_id` (FK → USER): Usuario creador de la instancia
+- `owner_user_id` (FK → USER): Usuario creador de la instancia
 - `name` (string): Nombre de la instancia
 - `state` (TournamentState): Estado de la instancia (`approved` | `pending` | `denied`)
 - `created_at` (date): Fecha de creación
@@ -70,13 +69,16 @@ Representa la inscripción de un usuario en una instancia (polla), incluyendo su
 
 **Atributos:**
 - `id` (PK, uuid): Identificador único
-- `user_id` (FK → USER): Usuario inscrito
-- `instance_id` (FK → TOURNAMENT_INSTANCE): Instancia a la que pertenece
-- `joined_at` (date): Fecha en que se unió
+- `player_id` (FK → USER): Usuario inscrito
+- `tournament_instance_id` (FK → TOURNAMENT_INSTANCE): Instancia a la que pertenece
 - `last_position` (number): Posición anterior en el ranking
 - `current_position` (number): Posición actual en el ranking
 - `current_score` (number): Puntaje acumulado actual
+- `exact_hits` (number): Total de predicciones con marcador exacto
 - `streak` (number): Racha activa del usuario
+- `created_at` (date): Fecha de creación
+- `updated_at` (date): Fecha de actualización
+- `joined_at` (date): Fecha en que se unió
 
 ---
 
@@ -91,11 +93,10 @@ Partidos disputados entre equipos dentro de un torneo.
 - `kick_off` (date): Fecha y hora del partido
 - `home_score` (number): Goles del equipo local
 - `away_score` (number): Goles del equipo visitante
-- `status` (MatchStatus): Estado del partido (`scheduled` | `in_progress` | `finished`)
+- `status` (MatchStatus): Estado del partido (`scheduled` | `in_progress` | `finished` | `draft`)
 - `stage` (MatchStage): Etapa del partido (`group` | `finals`)
 - `created_at` (date): Fecha de creación
 - `updated_at` (date): Fecha de actualización
-- `deleted_at` (date): Fecha de eliminación lógica
 
 ---
 
@@ -104,10 +105,10 @@ Predicciones realizadas por un usuario inscrito sobre el resultado de un partido
 
 **Atributos:**
 - `id` (PK, uuid): Identificador único
+- `user_enrollment_id` (FK → USER_ENROLLMENT): Inscripción del usuario que predice
 - `match_id` (FK → MATCH): Partido al que corresponde la predicción
-- `enrollment_id` (FK → USER_ENROLLMENT): Inscripción del usuario que predice
-- `home_score` (number): Predicción de goles del equipo local
-- `away_score` (number): Predicción de goles del equipo visitante
+- `pred_home_goals` (number): Predicción de goles del equipo local
+- `pred_away_goals` (number): Predicción de goles del equipo visitante
 - `earned_points` (number): Puntos obtenidos por la predicción
 - `has_exact_result` (bool): Indica si el usuario acertó el marcador exacto
 - `created_at` (date): Fecha de creación
@@ -182,7 +183,7 @@ Predicciones realizadas por un usuario inscrito sobre el resultado de un partido
 ## 4. Reglas de Negocio Implícitas
 
 - Un usuario debe estar inscrito en una instancia (`USER_ENROLLMENT`) para poder hacer predicciones
-- Un usuario inscrito solo puede predecir una vez por partido (constraint `UNIQUE` en `enrollment_id` + `match_id`)
+- Un usuario inscrito solo puede predecir una vez por partido (constraint `UNIQUE` en `user_enrollment_id` + `match_id`)
 - Una instancia debe estar aprobada (`state = approved`) para estar activa
 - `current_score`, `current_position` y `streak` en `USER_ENROLLMENT` se derivan de los resultados en `PREDICTION`
 - Los equipos pertenecen directamente a un torneo; no existe una tabla intermedia de equipos globales
