@@ -7,6 +7,7 @@ import { NodejsFunction } from 'aws-cdk-lib/aws-lambda-nodejs';
 import * as events from 'aws-cdk-lib/aws-events';
 import * as targets from 'aws-cdk-lib/aws-events-targets';
 import * as iam from 'aws-cdk-lib/aws-iam';
+import { LAMBDA_DEFAULTS } from '../constants';
 
 export interface RdsSchedulerProps {
   readonly databaseInstance: rds.IDatabaseInstance | null;
@@ -23,7 +24,7 @@ export class RdsScheduler extends Construct {
     this.handler = new NodejsFunction(this, 'Handler', {
       entry: path.join(__dirname, '..', '..', 'lambdas', 'rds-scheduler.ts'),
       handler: 'handler',
-      runtime: lambda.Runtime.NODEJS_20_X,
+      runtime: LAMBDA_DEFAULTS.runtime,
       timeout: cdk.Duration.minutes(1),
       environment: {
         DB_INSTANCE_IDENTIFIER: props.databaseInstance?.instanceIdentifier || '',

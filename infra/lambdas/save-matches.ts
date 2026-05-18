@@ -74,7 +74,8 @@ export const handler = async (event: any): Promise<void> => {
         await dbClient.connect();
         console.log('DB client connected successfully.');
         const matchData = parseEvent(event);
-        const saved = await dbClient.matches.save(matchData);
+        const matchMapped = mapMatchData(matchData);
+        const saved = await dbClient.matches.save(matchMapped);
         console.log('Match data saved successfully, postgresId:', saved.id);
 
         const table = process.env.MATCH_MAPPING_TABLE;
@@ -110,4 +111,29 @@ const parseEvent = (event: any): any => {
         }
     }
     return event;
+};
+
+const mapMatchData = (data: any): any => {
+    return {
+        kick_off: new Date(data.utcDate),
+        status: mapStatus(data.status),
+        stage: data.stage === 'GROUP_STAGE' ? 'group' : 'finals',
+        home_team_id: data.home_team_id,
+        away_team_id: data.away_team_id,
+        tournament_id: data.tournament_id,
+    };
+};
+
+const mapStatus = (status: string): 'scheduled' | 'in_progress' | 'finished' | 'draft' => {
+    const statusMap: Record<string, 'scheduled' | 'in_progress' | 'finished' | 'draft'> = {
+        SCHEDULED: 'scheduled',
+        TIMED: 'scheduled',
+        IN_PLAY: 'in_progress',
+        PAUSED: 'in_progress',
+        FINISHED: 'finished',
+        POSTPONED: 'scheduled',
+        SUSPENDED: 'scheduled',
+        CANCELED: 'scheduled',
+    };
+    return statusMap[status] || 'draft';
 };
