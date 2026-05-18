@@ -28,7 +28,9 @@
     "@aws-sdk/lib-dynamodb": "^3.658.0",
     "aws-cdk-lib": "^2.252.0",
     "constructs": "^10.5.0",
+    "knex": "^3.2.9",
     "node-fetch": "^3.3.2",
-    "skorifydata": "github:aws-ug-manizales/Skorify_Data#v1.2.0"
+    "pg": "^8.20.0",
+    "skorifydata": "github:aws-ug-manizales/Skorify_Data#v1.2.1-beta.4"
   }
 }

@@ -30,8 +30,8 @@ importers:
         specifier: ^3.3.2
         version: 3.3.2
       skorifydata:
-        specifier: github:aws-ug-manizales/Skorify_Data#v1.2.0
-        version: https://codeload.github.com/aws-ug-manizales/Skorify_Data/tar.gz/1bd44685a352da5096adabc06cd898a59a057206(ts-node@10.9.2(@types/node@24.12.4)(typescript@5.9.3))
+        specifier: github:aws-ug-manizales/Skorify_Data#v1.2.1-beta.4
+        version: https://codeload.github.com/aws-ug-manizales/Skorify_Data/tar.gz/48258d08e9915aec533347986338fcb79a6804bf(ts-node@10.9.2(@types/node@24.12.4)(typescript@5.9.3))
     devDependencies:
       '@aws-sdk/client-rds':
         specifier: ^3.658.0
@@ -1908,8 +1908,8 @@ packages:
     resolution: {integrity: sha512-bzyZ1e88w9O1iNJbKnOlvYTrWPDl46O1bG0D3XInv+9tkPrxrN8jUUTiFlDkkmKWgn1M6CfIA13SuGqOa9Korw==}
     engines: {node: '>=14'}
 
-  skorifydata@https://codeload.github.com/aws-ug-manizales/Skorify_Data/tar.gz/1bd44685a352da5096adabc06cd898a59a057206:
-    resolution: {tarball: https://codeload.github.com/aws-ug-manizales/Skorify_Data/tar.gz/1bd44685a352da5096adabc06cd898a59a057206}
+  skorifydata@https://codeload.github.com/aws-ug-manizales/Skorify_Data/tar.gz/48258d08e9915aec533347986338fcb79a6804bf:
+    resolution: {tarball: https://codeload.github.com/aws-ug-manizales/Skorify_Data/tar.gz/48258d08e9915aec533347986338fcb79a6804bf}
     version: 1.0.0-beta
 
   slash@3.0.0:
@@ -4351,7 +4351,7 @@ snapshots:
 
   signal-exit@4.1.0: {}
 
-  skorifydata@https://codeload.github.com/aws-ug-manizales/Skorify_Data/tar.gz/1bd44685a352da5096adabc06cd898a59a057206(ts-node@10.9.2(@types/node@24.12.4)(typescript@5.9.3)):
+  skorifydata@https://codeload.github.com/aws-ug-manizales/Skorify_Data/tar.gz/48258d08e9915aec533347986338fcb79a6804bf(ts-node@10.9.2(@types/node@24.12.4)(typescript@5.9.3)):
     dependencies:
       class-transformer: 0.5.1
       class-validator: 0.15.1
