@@ -2,14 +2,14 @@ import { getRequest } from './httpClient';
 
 const BASE_URL = 'https://api.football-data.org/v4';
 
-export const getMatchesByCompetition = async (competitionId: string): Promise<any[]> => {
+export const getMatchesByCompetition = async (competitionId: string): Promise<{ matches: any[], competition: any }> => {
   // Simulate fetching matches from a data source based on the competition ID
   console.log(`Fetching matches for competition ID: ${competitionId}`);
-  const matchesResponse = await getRequest(`${BASE_URL}/competitions/${competitionId}/matches`);
+  const matchesResponse = await getRequest(`${BASE_URL}/competitions/${competitionId}/matches?limit=2`);
   const matches = matchesResponse.matches || [];
   console.log(`Received matches data: ${JSON.stringify(matches)}`);
   const matchesParsed = parseMatches(matches);
-  return matchesParsed;
+  return { matches: matchesParsed, competition: matchesResponse.competition || {} };
 };
 
 const parseMatches = (matchesData: any[]): any[] => {

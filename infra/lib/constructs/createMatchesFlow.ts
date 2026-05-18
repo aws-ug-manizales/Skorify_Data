@@ -10,6 +10,9 @@ import * as path from 'path';
 import * as sfn from "aws-cdk-lib/aws-stepfunctions";
 import * as sfnTasks from "aws-cdk-lib/aws-stepfunctions-tasks";
 
+import { createLambda } from "../utils";
+import { LAMBDA_DEFAULTS } from '../constants';
+
 export interface CreateMatchesFlowProps {
   /** VPC donde corren las lambdas que necesitan acceso a la RDS */
   vpc: ec2.IVpc;
@@ -43,21 +46,19 @@ export class createMatchesFlow extends Construct {
       removalPolicy: cdk.RemovalPolicy.RETAIN,
     });
 
-    this.matchesByCompetitionLambda = new NodejsFunction(this, 'MatchesByCompetitionLambda', {
-      entry: path.join(__dirname, '..', '..', 'lambdas', 'get-matches-by-competition.ts'),
-      handler: 'handler',
-      runtime: lambda.Runtime.NODEJS_20_X,
-      timeout: cdk.Duration.minutes(1),
-      environment: {
-        FOOTBALL_DATA_API_TOKEN: process.env.FOOTBALL_DATA_API_TOKEN || '',
-      }
-    });
+    this.matchesByCompetitionLambda = createLambda(
+      "GetMatchesByCompetitionLambda",
+      path.join(__dirname, '..', '..', 'lambdas', 'get-matches-by-competition.ts'),
+      this
+    );
+
+    this.matchesByCompetitionLambda.addEnvironment("FOOTBALL_DATA_API_TOKEN", process.env.FOOTBALL_DATA_API_TOKEN || '');
 
     this.resolveTeamsLambda = new NodejsFunction(this, 'ResolveTeamsLambda', {
       entry: path.join(__dirname, '..', '..', 'lambdas', 'resolve-teams.ts'),
       handler: 'handler',
-      runtime: lambda.Runtime.NODEJS_20_X,
-      timeout: cdk.Duration.minutes(1),
+      runtime: LAMBDA_DEFAULTS.runtime,
+      timeout: LAMBDA_DEFAULTS.timeout,
       vpc: props.vpc,
       vpcSubnets: { subnetType: ec2.SubnetType.PRIVATE_ISOLATED },
       environment: {
@@ -77,8 +78,8 @@ export class createMatchesFlow extends Construct {
     this.saveMatchesLambda = new NodejsFunction(this, 'SaveMatchesLambda', {
       entry: path.join(__dirname, '..', '..', 'lambdas', 'save-matches.ts'),
       handler: 'handler',
-      runtime: lambda.Runtime.NODEJS_20_X,
-      timeout: cdk.Duration.minutes(1),
+      runtime: LAMBDA_DEFAULTS.runtime,
+      timeout: LAMBDA_DEFAULTS.timeout,
       vpc: props.vpc,
       vpcSubnets: { subnetType: ec2.SubnetType.PRIVATE_ISOLATED },
       environment: {

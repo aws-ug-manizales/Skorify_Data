@@ -56,10 +56,7 @@ async function resolveTeam(fdTeam: FootballDataTeam): Promise<string> {
     const db = await getDbClient();
     const created = await db.teams.create({
         name: fdTeam.name,
-        code:
-            fdTeam.tla ??
-            fdTeam.shortName ??
-            fdTeam.name.slice(0, 3).toUpperCase(),
+        tournament_id: 'WC',
         shield_url: fdTeam.crest ?? null,
     });
 

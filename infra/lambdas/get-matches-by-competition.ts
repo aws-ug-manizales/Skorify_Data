@@ -8,11 +8,12 @@ export const handler = async (event: any): Promise<any> => {
         throw new Error("Competition ID is required");
     }
     try {
-        const matches = await getMatchesByCompetition(competitionId);
+        const { matches, competition } = await getMatchesByCompetition(competitionId);
         console.log(`Fetched ${matches.length} matches for competition ID: ${competitionId}`);
         return {
             statusCode: 200,
             matches: matches,
+            competition: competition
         };
     } catch (error) {
         console.error(`Error fetching matches for competition ID ${competitionId}:`, error);

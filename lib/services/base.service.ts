@@ -69,6 +69,7 @@ export abstract class BaseDataService<T extends { id: string }> {
             await validateOrReject(entityInstance, {
                 whitelist: true,
                 forbidNonWhitelisted: true,
+                forbidUnknownValues: false,
             });
         } catch (errors) {
             const messages = this.formatErrors(errors as ValidationError[]);

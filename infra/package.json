@@ -29,6 +29,6 @@
     "aws-cdk-lib": "^2.252.0",
     "constructs": "^10.5.0",
     "node-fetch": "^3.3.2",
-    "skorifydata": "github:aws-ug-manizales/Skorify_Data#v1.2.0-beta"
+    "skorifydata": "github:aws-ug-manizales/Skorify_Data#v1.2.0"
   }
 }
