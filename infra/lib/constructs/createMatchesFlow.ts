@@ -21,6 +21,7 @@ export interface CreateMatchesFlowProps {
 
 export class createMatchesFlow extends Construct {
   public readonly matchesByCompetitionLambda: NodejsFunction;
+  public readonly resolveTournamentLambda: NodejsFunction;
   public readonly resolveTeamsLambda: NodejsFunction;
   public readonly saveMatchesLambda: NodejsFunction;
   public readonly createMatchesSFn: sfn.StateMachine;
@@ -28,6 +29,8 @@ export class createMatchesFlow extends Construct {
   public readonly matchMappingTable: dynamodb.Table;
   /** Mapeo fdataId -> postgresId para teams */
   public readonly teamMappingTable: dynamodb.Table;
+  /** Mapeo fdataId -> postgresId para tournaments */
+  public readonly tournamentMappingTable: dynamodb.Table;
 
   constructor(scope: Construct, id: string, props: CreateMatchesFlowProps) {
     super(scope, id);
@@ -46,6 +49,12 @@ export class createMatchesFlow extends Construct {
       removalPolicy: cdk.RemovalPolicy.RETAIN,
     });
 
+    this.tournamentMappingTable = new dynamodb.Table(this, 'TournamentMappingTable', {
+      partitionKey: { name: 'fdataId', type: dynamodb.AttributeType.STRING },
+      billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
+      removalPolicy: cdk.RemovalPolicy.RETAIN,
+    });
+
     this.matchesByCompetitionLambda = createLambda(
       "GetMatchesByCompetitionLambda",
       path.join(__dirname, '..', '..', 'lambdas', 'get-matches-by-competition.ts'),
@@ -53,6 +62,27 @@ export class createMatchesFlow extends Construct {
     );
 
     this.matchesByCompetitionLambda.addEnvironment("FOOTBALL_DATA_API_TOKEN", process.env.FOOTBALL_DATA_API_TOKEN || '');
+
+    this.resolveTournamentLambda = new NodejsFunction(this, 'ResolveTournamentLambda', {
+      entry: path.join(__dirname, '..', '..', 'lambdas', 'resolve-tournament.ts'),
+      handler: 'handler',
+      runtime: LAMBDA_DEFAULTS.runtime,
+      timeout: LAMBDA_DEFAULTS.timeout,
+      vpc: props.vpc,
+      vpcSubnets: { subnetType: ec2.SubnetType.PRIVATE_ISOLATED },
+      environment: {
+        DB_SECRET_ARN: props.dbSecretArn,
+        TOURNAMENT_MAPPING_TABLE: this.tournamentMappingTable.tableName,
+      },
+    });
+
+    this.resolveTournamentLambda.addToRolePolicy(
+      new iam.PolicyStatement({
+        actions: ['secretsmanager:GetSecretValue'],
+        resources: [props.dbSecretArn],
+      }),
+    );
+    this.tournamentMappingTable.grantReadWriteData(this.resolveTournamentLambda);
 
     this.resolveTeamsLambda = new NodejsFunction(this, 'ResolveTeamsLambda', {
       entry: path.join(__dirname, '..', '..', 'lambdas', 'resolve-teams.ts'),
@@ -115,6 +145,12 @@ export class createMatchesFlow extends Construct {
 
     const skipExistingMatch = new sfn.Succeed(this, 'SkipExistingMatch');
 
+    const resolveTournamentTask = new sfnTasks.LambdaInvoke(this, 'ResolveTournament', {
+      lambdaFunction: this.resolveTournamentLambda,
+      inputPath: '$',
+      outputPath: '$.Payload',
+    });
+
     const resolveTeamsTask = new sfnTasks.LambdaInvoke(this, 'ResolveTeams', {
       lambdaFunction: this.resolveTeamsLambda,
       inputPath: '$',
@@ -144,7 +180,7 @@ export class createMatchesFlow extends Construct {
     matchesMap.itemProcessor(matchPipeline);
 
     this.createMatchesSFn = new sfn.StateMachine(this, 'CreateMatchesStateMachine', {
-      definition: getMatchesTask.next(matchesMap),
+      definition: getMatchesTask.next(resolveTournamentTask).next(matchesMap),
       timeout: cdk.Duration.minutes(5)
     });
   }

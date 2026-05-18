@@ -22,6 +22,7 @@ interface ParsedMatch {
     utcDate: string;
     status: string;
     matchday: number;
+    tournament_id: string;
     homeTeam: FootballDataTeam;
     awayTeam: FootballDataTeam;
 }
@@ -37,7 +38,7 @@ function getDbClient(): Promise<DBClient> {
     return dbClientPromise;
 }
 
-async function resolveTeam(fdTeam: FootballDataTeam): Promise<string> {
+async function resolveTeam(fdTeam: FootballDataTeam, tournamentId: string): Promise<string> {
     const fdataId = String(fdTeam.id);
     const table = process.env.TEAM_MAPPING_TABLE;
     if (!table) {
@@ -56,7 +57,7 @@ async function resolveTeam(fdTeam: FootballDataTeam): Promise<string> {
     const db = await getDbClient();
     const created = await db.teams.create({
         name: fdTeam.name,
-        tournament_id: 'WC',
+        tournament_id: tournamentId,
         shield_url: fdTeam.crest ?? null,
     });
 
@@ -77,8 +78,8 @@ export const handler = async (
     console.log('Resolving teams for match:', match.id);
 
     const [home_team_id, away_team_id] = await Promise.all([
-        resolveTeam(match.homeTeam),
-        resolveTeam(match.awayTeam),
+        resolveTeam(match.homeTeam, match.tournament_id),
+        resolveTeam(match.awayTeam, match.tournament_id),
     ]);
 
     return { ...match, home_team_id, away_team_id };
