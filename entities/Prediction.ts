@@ -41,11 +41,11 @@ export class Prediction {
   @Column({ type: 'timestamptz', nullable: true, default: null })
   deleted_at!: Date | null;
 
-  @ManyToOne('InstanceUser', 'predictions', { onDelete: 'CASCADE' })
+  @ManyToOne('InstanceUser', 'predictions', { onDelete: 'NO ACTION' })
   @JoinColumn({ name: 'instance_player_id' })
   instance_player!: InstanceUser;
 
-  @ManyToOne('Match', 'predictions', { onDelete: 'CASCADE' })
+  @ManyToOne('Match', 'predictions', { onDelete: 'NO ACTION' })
   @JoinColumn({ name: 'match_id' })
   match!: Match;
 }

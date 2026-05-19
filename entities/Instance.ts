@@ -49,11 +49,11 @@ export class Instance {
   @Column({ type: 'timestamptz', nullable: true, default: null })
   deleted_at!: Date | null;
 
-  @ManyToOne('Tournament', 'instances', { onDelete: 'CASCADE' })
+  @ManyToOne('Tournament', 'instances', { onDelete: 'NO ACTION' })
   @JoinColumn({ name: 'tournament_id' })
   tournament!: Tournament;
 
-  @ManyToOne('User', 'owned_instances', { onDelete: 'CASCADE' })
+  @ManyToOne('User', 'owned_instances', { onDelete: 'NO ACTION' })
   @JoinColumn({ name: 'owner_user_id' })
   owner!: User;
 

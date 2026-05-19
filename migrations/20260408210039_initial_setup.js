@@ -90,8 +90,8 @@ exports.up = async function (knex) {
   // ── Instances (pollas / pools) ──
   await knex.schema.createTable('instances', (t) => {
     t.uuid('id').primary().defaultTo(knex.fn.uuid());
-    t.uuid('tournament_id').notNullable().references('id').inTable('tournaments').onDelete('CASCADE');
-    t.uuid('owner_user_id').notNullable().references('id').inTable('users').onDelete('CASCADE');
+    t.uuid('tournament_id').notNullable().references('id').inTable('tournaments').onDelete('NO ACTION');
+    t.uuid('owner_user_id').notNullable().references('id').inTable('users').onDelete('NO ACTION');
     t.uuid('validator_user_id').references('id').inTable('users').onDelete('SET NULL');
     t.enu('state', ['approved', 'pending', 'denied']).notNullable().defaultTo('pending');
     t.string('name').notNullable();
@@ -123,8 +123,8 @@ exports.up = async function (knex) {
   // ── Predictions ──
   await knex.schema.createTable('predictions', (t) => {
     t.uuid('id').primary().defaultTo(knex.fn.uuid());
-    t.uuid('instance_player_id').notNullable().references('id').inTable('instance_users').onDelete('CASCADE');
-    t.uuid('match_id').notNullable().references('id').inTable('matches').onDelete('CASCADE');
+    t.uuid('instance_player_id').notNullable().references('id').inTable('instance_users').onDelete('NO ACTION');
+    t.uuid('match_id').notNullable().references('id').inTable('matches').onDelete('NO ACTION');
     t.integer('pred_home_goals').notNullable();
     t.integer('pred_away_goals').notNullable();
     t.integer('earned_points').defaultTo(0);
@@ -137,8 +137,8 @@ exports.up = async function (knex) {
   // ── Payments ──
   await knex.schema.createTable('payments', (t) => {
     t.uuid('id').primary().defaultTo(knex.fn.uuid());
-    t.uuid('user_id').notNullable().references('id').inTable('users').onDelete('CASCADE');
-    t.uuid('tournament_id').notNullable().references('id').inTable('tournaments').onDelete('CASCADE');
+    t.uuid('user_id').notNullable().references('id').inTable('users').onDelete('NO ACTION');
+    t.uuid('tournament_id').notNullable().references('id').inTable('tournaments').onDelete('NO ACTION');
     t.enu('state_pay', ['failed', 'pending', 'paid']).notNullable().defaultTo('pending');
     t.timestamp("created_at", { useTz: true }).defaultTo(knex.fn.now());
     t.timestamp("updated_at", { useTz: true }).defaultTo(null);

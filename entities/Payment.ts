@@ -36,11 +36,11 @@ export class Payment {
   @UpdateDateColumn({ type: 'timestamptz', nullable: true, default: null })
   updated_at!: Date | null;
 
-  @ManyToOne(() => User, (u) => u.payments, { onDelete: 'CASCADE' })
+  @ManyToOne(() => User, (u) => u.payments, { onDelete: 'NO ACTION' })
   @JoinColumn({ name: 'user_id' })
   user!: User;
 
-  @ManyToOne(() => Tournament, (t) => t.payments, { onDelete: 'CASCADE' })
+  @ManyToOne(() => Tournament, (t) => t.payments, { onDelete: 'NO ACTION' })
   @JoinColumn({ name: 'tournament_id' })
   tournament!: Tournament;
 }
