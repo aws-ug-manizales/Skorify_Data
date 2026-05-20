@@ -1,84 +1,108 @@
 import { validateOrReject, ValidationError } from "class-validator";
 import { plainToInstance } from "class-transformer";
-import { DeepPartial, FindManyOptions, FindOptionsWhere, In, Repository } from "typeorm";
+import {
+  DeepPartial,
+  FindManyOptions,
+  FindOptionsWhere,
+  In,
+  IsNull,
+  Repository,
+} from "typeorm";
+import { BaseMapper } from "../mappers/base.mapper";
+import { BuiltEntityDomainEvent, Entity } from "@skorify/domain/core";
 
-export abstract class BaseDataService<T extends { id: string }> {
-    constructor(
-        private entityClass: new () => T,
-        protected readonly repository: Repository<T>
-    ) {}
+export abstract class BaseDataService<
+  IE extends { id: string },
+  DE extends Entity,
+> {
+  constructor(
+    private entityClass: new () => IE,
+    protected readonly repository: Repository<IE>,
+    protected mapper: BaseMapper,
+  ) {}
 
-    async save(data: Partial<T>): Promise<T> {
-        await this.validateData(data);
-        await this.validateRules(data);
-        const newEntity = this.repository.create(data as DeepPartial<T>);
-        return await this.repository.save(newEntity);
+  async getById(id: string): Promise<DE | null> {
+    const temp = await this.repository.findOne({
+      where: { id, deleted_at: IsNull() } as unknown as FindOptionsWhere<IE>,
+    });
+
+    if (temp) {
+      const domainEvent = this.mapper.fromJson(temp);
+      if (domainEvent.is(BuiltEntityDomainEvent)) {
+        return domainEvent.payload as DE;
+      }
     }
+    return null;
+  }
 
-    async getById(id: string): Promise<T | null> {
-        return await this.repository.findOne({
-            where: { id } as FindOptionsWhere<T>,
-        });
+  async save(data: DE): Promise<IE> {
+    await this.validateData(data);
+    await this.validateRules(data);
+    const json = this.mapper.toJson(data);
+    const newEntity = this.repository.create(json as DeepPartial<IE>);
+    return await this.repository.save(newEntity);
+  }
+
+  async deleteById(id: string): Promise<void> {
+    await this.repository.update(id, {});
+  }
+
+  async modifyById(id: string, data: DE): Promise<DE> {
+    await this.validateData(data);
+    await this.validateRules(data);
+    await this.repository.update(id, data as any);
+    const updated = await this.getById(id);
+    if (!updated) throw new Error(`Entity with id ${id} not found`);
+    return updated;
+  }
+
+  async getAll(): Promise<IE[]> {
+    return await this.repository.find();
+  }
+
+  async getByIDs(ids: string[]): Promise<IE[]> {
+    return await this.repository.find({
+      where: { id: In(ids) } as FindOptionsWhere<IE>,
+    });
+  }
+
+  async filter(filters: FindManyOptions<IE>): Promise<IE[]> {
+    if (!filters.take) filters.take = 100; // Default limit
+    filters.where = this.applyBoundaries(filters.where);
+    return await this.repository.find(filters);
+  }
+
+  protected applyBoundaries(
+    where?: FindOptionsWhere<IE> | FindOptionsWhere<IE>[],
+  ): FindOptionsWhere<IE> | FindOptionsWhere<IE>[] {
+    // Implement boundary logic if needed, e.g., based on user permissions
+    return where || {};
+  }
+
+  protected async validateData(data: DE): Promise<void> {
+    await this.validateSchema(data);
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  protected async validateRules(_data: DE): Promise<void> {}
+
+  protected async validateSchema(data: DE): Promise<void> {
+    const json = this.mapper.toJson(data);
+
+    const entityInstance = plainToInstance(this.entityClass, json);
+
+    try {
+      await validateOrReject(entityInstance, {
+        whitelist: true,
+        forbidNonWhitelisted: true,
+      });
+    } catch (errors) {
+      const messages = this.formatErrors(errors as ValidationError[]);
+      throw new Error(`Data Validation Failed: ${messages.join(", ")}`);
     }
+  }
 
-    async getAll(): Promise<T[]> {
-        return await this.repository.find();
-    }
-
-    async getByIDs(ids: string[]): Promise<T[]> {
-        return await this.repository.find({
-            where: { id: In(ids) } as FindOptionsWhere<T>,
-        });
-    }
-
-    async modifyById(id: string, data: Partial<T>): Promise<T> {
-        await this.validateData(data);
-        await this.validateRules(data);
-        await this.repository.update(id, data as any);
-        const updated = await this.getById(id);
-        if (!updated) throw new Error(`Entity with id ${id} not found`);
-        return updated;
-    }
-
-    async deleteById(id: string): Promise<void> {
-        await this.repository.delete(id);
-    }
-
-    async filter(filters: FindManyOptions<T>): Promise<T[]> {
-        if (!filters.take) filters.take = 100; // Default limit
-        filters.where = this.applyBoundaries(filters.where);
-        return await this.repository.find(filters);
-    }
-
-    protected applyBoundaries(where?: FindOptionsWhere<T> | FindOptionsWhere<T>[]): FindOptionsWhere<T> | FindOptionsWhere<T>[] {
-        // Implement boundary logic if needed, e.g., based on user permissions
-        return where || {};
-    }
-
-    protected async validateData(data: Partial<T>): Promise<void> {
-        await this.validateSchema(data);
-    }
-
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    protected async validateRules(_data: Partial<T>): Promise<void> {}
-
-    protected async validateSchema(data: Partial<T>): Promise<void> {
-        const entityInstance = plainToInstance(this.entityClass, data);
-
-        try {
-            await validateOrReject(entityInstance, {
-                whitelist: true,
-                forbidNonWhitelisted: true,
-            });
-        } catch (errors) {
-            const messages = this.formatErrors(errors as ValidationError[]);
-            throw new Error(`Data Validation Failed: ${messages.join(", ")}`);
-        }
-    }
-
-    private formatErrors(errors: ValidationError[]): string[] {
-        return errors.map((err) =>
-            Object.values(err.constraints || {}).join(", ")
-        );
-    }
+  private formatErrors(errors: ValidationError[]): string[] {
+    return errors.map((err) => Object.values(err.constraints || {}).join(", "));
+  }
 }

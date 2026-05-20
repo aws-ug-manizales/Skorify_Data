@@ -1,32 +1,11 @@
-import { IsNull, Repository } from "typeorm";
-import { User as UserEntity } from "../../entities/User";
+import { UserEntity } from "@skorify/domain/user";
+import { Repository } from "typeorm";
+import { User } from "../../entities/User";
+import { UserMapper } from "../mappers/user.mapper";
 import { BaseDataService } from "./base.service";
 
-export class UserService extends BaseDataService<UserEntity> {
-    constructor(repository: Repository<UserEntity>) {
-        super(UserEntity, repository);
-    }
-
-    /**
-     * Returns all active users (excluding soft-deleted rows).
-     */
-    async findAllActive(): Promise<UserEntity[]> {
-        return await this.repository.find({
-            where: { deleted_at: IsNull() }
-        });
-    }
-
-    /**
-     * Finds an active user by id.
-     */
-    async getById(id: string): Promise<UserEntity | null> {
-        return await this.repository.findOne({ where: { id, deleted_at: IsNull() } });
-    }
-
-    /**
-     * Soft-deletes a user by id.
-     */
-    async deleteById(id: string): Promise<void> {
-        await this.repository.update(id, { deleted_at: new Date() });
-    }
+export class UserService extends BaseDataService<User, UserEntity> {
+  constructor(repository: Repository<User>, mapper: UserMapper) {
+    super(User, repository, mapper);
+  }
 }
