@@ -105,6 +105,28 @@ export class BackendClient {
     }, this.retryOptions);
   }
 
+  async calculateTournamentInstanceRanking(
+    instanceId: string,
+    detail: Record<string, unknown>
+  ): Promise<void> {
+    return withRetry(async () => {
+      const response = await fetch(
+        `${this.baseUrl}/tournament-instance/${instanceId}/calculate-tournament-instance-ranking`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(detail),
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(
+          `Backend returned ${response.status}: ${await response.text()}`
+        );
+      }
+    }, this.retryOptions);
+  }
+
   async notifyUsers(
     detail: Record<string, unknown>
   ): Promise<void> {

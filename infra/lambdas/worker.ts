@@ -31,12 +31,6 @@ async function publishMatchFinished(detail: MatchFinishedDetail): Promise<void> 
         DetailType: "MatchFinished",
         Detail: JSON.stringify(detail),
       },
-      {
-        EventBusName: EVENT_BUS_NAME,
-        Source: "SkorifyBackend",
-        DetailType: "MatchFinished",
-        Detail: JSON.stringify(detail),
-      },
     ],
   });
 
@@ -81,7 +75,7 @@ export const handler = async (): Promise<void> => {
     await publishMatchFinished(detail);
     logger.success(
       detail.match_id,
-      "Published MatchFinished to SkorifyData + SkorifyBackend",
+      "Published MatchFinished to SkorifyData",
       {
         tournament_id: detail.tournament_id,
         stage: detail.stage,

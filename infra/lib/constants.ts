@@ -11,6 +11,7 @@ export const EventSources = {
 export const DetailTypes = {
   MATCH_FINISHED: "MatchFinished",
   NOTIFY_USER: "NotifyUser",
+  CALCULATE_INSTANCE_RANKING: "CalculateInstanceRanking",
 } as const;
 
 export const QUEUE_DEFAULTS = {
