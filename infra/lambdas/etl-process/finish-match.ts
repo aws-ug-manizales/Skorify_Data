@@ -1,8 +1,8 @@
 import type { SQSEvent, SQSRecord } from "aws-lambda";
-import { BackendClient } from "../utils/backend-client.js";
-import { createEventLogger } from "../utils/logger.js";
-import { RetryExhaustedError } from "../utils/retry.js";
-import type { MatchFinishedDetail } from "../utils/types.js";
+import { BackendClient } from "../../utils/backend-client.js";
+import { createEventLogger } from "../../utils/logger.js";
+import { RetryExhaustedError } from "../../utils/retry.js";
+import type { MatchFinishedDetail } from "../../utils/types.js";
 
 const BACKEND_URL = process.env.BACKEND_URL ?? "";
 

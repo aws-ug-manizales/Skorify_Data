@@ -112,7 +112,7 @@ export class MatchProcessingStack extends cdk.Stack {
 
     const calculateRankingLambda = createLambda(
       "CalculateRankingLambda",
-      "lambdas/calculate-ranking.ts",
+      "lambdas/etl-process/calculate-ranking.ts",
       this
     );
     calculateRankingLambda.addEnvironment(ENV.BACKEND_URL, backendUrl);

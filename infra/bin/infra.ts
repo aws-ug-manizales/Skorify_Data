@@ -13,5 +13,5 @@ const env = {
 const envName: string =
   app.node.tryGetContext("env") ?? process.env.ENV_NAME ?? "dev";
 
-new DatabaseStack(app, `skorifyDatabase`, { env, envName });
+new DatabaseStack(app, "skorifyDatabase", { env, envName });
 new MatchProcessingStack(app, "skorifyEventBridge", { env, envName });
