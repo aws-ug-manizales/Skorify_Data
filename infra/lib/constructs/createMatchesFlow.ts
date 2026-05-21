@@ -3,7 +3,6 @@ import { Construct } from 'constructs';
 import * as dynamodb from 'aws-cdk-lib/aws-dynamodb';
 import * as ec2 from 'aws-cdk-lib/aws-ec2';
 import * as iam from 'aws-cdk-lib/aws-iam';
-import * as lambda from 'aws-cdk-lib/aws-lambda';
 import { NodejsFunction } from 'aws-cdk-lib/aws-lambda-nodejs';
 import * as path from 'path';
 
@@ -17,6 +16,9 @@ export interface CreateMatchesFlowProps {
   /** VPC donde corren las lambdas que necesitan acceso a la RDS */
   vpc: ec2.IVpc;
   dbSecretArn: string;
+  matchMappingTable: dynamodb.Table;
+  teamMappingTable: dynamodb.Table;
+  tournamentMappingTable: dynamodb.Table;
 }
 
 export class createMatchesFlow extends Construct {
@@ -25,7 +27,7 @@ export class createMatchesFlow extends Construct {
   public readonly resolveTeamsLambda: NodejsFunction;
   public readonly saveMatchesLambda: NodejsFunction;
   public readonly createMatchesSFn: sfn.StateMachine;
-  /** Mapeo fdataId -> postgresId para matches */
+   /** Mapeo fdataId -> postgresId para matches */
   public readonly matchMappingTable: dynamodb.Table;
   /** Mapeo fdataId -> postgresId para teams */
   public readonly teamMappingTable: dynamodb.Table;
@@ -35,25 +37,9 @@ export class createMatchesFlow extends Construct {
   constructor(scope: Construct, id: string, props: CreateMatchesFlowProps) {
     super(scope, id);
 
-    // Tablas de mapeo entre IDs externos de football-data y los IDs internos de Postgres.
-    // Se populan desde el flujo de save-matches.
-    this.matchMappingTable = new dynamodb.Table(this, 'MatchMappingTable', {
-      partitionKey: { name: 'fdataId', type: dynamodb.AttributeType.STRING },
-      billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
-      removalPolicy: cdk.RemovalPolicy.RETAIN,
-    });
-
-    this.teamMappingTable = new dynamodb.Table(this, 'TeamMappingTable', {
-      partitionKey: { name: 'fdataId', type: dynamodb.AttributeType.STRING },
-      billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
-      removalPolicy: cdk.RemovalPolicy.RETAIN,
-    });
-
-    this.tournamentMappingTable = new dynamodb.Table(this, 'TournamentMappingTable', {
-      partitionKey: { name: 'fdataId', type: dynamodb.AttributeType.STRING },
-      billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
-      removalPolicy: cdk.RemovalPolicy.RETAIN,
-    });
+    this.matchMappingTable = props.matchMappingTable;
+    this.teamMappingTable = props.teamMappingTable;
+    this.tournamentMappingTable = props.tournamentMappingTable;
 
     this.matchesByCompetitionLambda = createLambda(
       "GetMatchesByCompetitionLambda",

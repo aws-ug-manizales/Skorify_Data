@@ -6,7 +6,7 @@ const BASE_URL = 'https://api.football-data.org/v4';
 export const getMatchesByCompetition = async (competitionId: string): Promise<{ matches: FootballDataMatch[], competition: FootballDataCompetition }> => {
   // Simulate fetching matches from a data source based on the competition ID
   console.log(`Fetching matches for competition ID: ${competitionId}`);
-  const matchesResponse = await getRequest(`${BASE_URL}/competitions/${competitionId}/matches?stage=FINAL`);
+  const matchesResponse = await getRequest(`${BASE_URL}/competitions/${competitionId}/matches?stage=GROUP_STAGE`);
   const matches = matchesResponse.matches || [];
   console.log(`Received matches data: ${JSON.stringify(matches)}`);
   const matchesParsed = parseMatches(matches);
