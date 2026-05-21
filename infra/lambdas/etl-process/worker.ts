@@ -1,5 +1,5 @@
 import { EventBridgeClient, PutEventsCommand } from "@aws-sdk/client-eventbridge";
-import { getMatchesByCompetition } from '../utils/footballDataClient';
+import { getMatchesByCompetition } from '../../utils/footballDataClient';
 
 const eventBridge = new EventBridgeClient();
 const EVENT_BUS_NAME = process.env.EVENT_BUS_NAME ?? "SkorifyDataBus";

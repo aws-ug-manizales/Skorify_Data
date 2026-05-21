@@ -57,14 +57,14 @@ export class createMatchesFlow extends Construct {
 
     this.matchesByCompetitionLambda = createLambda(
       "GetMatchesByCompetitionLambda",
-      path.join(__dirname, '..', '..', 'lambdas', 'get-matches-by-competition.ts'),
+      path.join(__dirname, '..', '..', 'lambdas', 'create-tournament', 'get-matches-by-competition.ts'),
       this
     );
 
     this.matchesByCompetitionLambda.addEnvironment("FOOTBALL_DATA_API_TOKEN", process.env.FOOTBALL_DATA_API_TOKEN || '');
 
     this.resolveTournamentLambda = new NodejsFunction(this, 'ResolveTournamentLambda', {
-      entry: path.join(__dirname, '..', '..', 'lambdas', 'resolve-tournament.ts'),
+      entry: path.join(__dirname, '..', '..', 'lambdas', 'create-tournament', 'resolve-tournament.ts'),
       handler: 'handler',
       runtime: LAMBDA_DEFAULTS.runtime,
       timeout: LAMBDA_DEFAULTS.timeout,
@@ -85,7 +85,7 @@ export class createMatchesFlow extends Construct {
     this.tournamentMappingTable.grantReadWriteData(this.resolveTournamentLambda);
 
     this.resolveTeamsLambda = new NodejsFunction(this, 'ResolveTeamsLambda', {
-      entry: path.join(__dirname, '..', '..', 'lambdas', 'resolve-teams.ts'),
+      entry: path.join(__dirname, '..', '..', 'lambdas', 'create-tournament', 'resolve-teams.ts'),
       handler: 'handler',
       runtime: LAMBDA_DEFAULTS.runtime,
       timeout: LAMBDA_DEFAULTS.timeout,
@@ -106,7 +106,7 @@ export class createMatchesFlow extends Construct {
     this.teamMappingTable.grantReadWriteData(this.resolveTeamsLambda);
 
     this.saveMatchesLambda = new NodejsFunction(this, 'SaveMatchesLambda', {
-      entry: path.join(__dirname, '..', '..', 'lambdas', 'save-matches.ts'),
+      entry: path.join(__dirname, '..', '..', 'lambdas', 'create-tournament', 'save-matches.ts'),
       handler: 'handler',
       runtime: LAMBDA_DEFAULTS.runtime,
       timeout: LAMBDA_DEFAULTS.timeout,

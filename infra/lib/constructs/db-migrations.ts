@@ -7,7 +7,7 @@ import * as ec2 from 'aws-cdk-lib/aws-ec2';
 import * as iam from 'aws-cdk-lib/aws-iam';
 import * as rds from 'aws-cdk-lib/aws-rds';
 import { NodejsFunction } from 'aws-cdk-lib/aws-lambda-nodejs';
-import { Trigger } from 'aws-cdk-lib/triggers';
+// import { Trigger } from 'aws-cdk-lib/triggers';
 import { Construct } from 'constructs';
 
 import { LAMBDA_DEFAULTS } from '../constants';
@@ -48,7 +48,7 @@ export class DbMigrations extends Construct {
     const hash = migrationsHash(migrationsDir);
 
     const migrationLambda = new NodejsFunction(this, 'MigrationLambda', {
-      entry: path.join(__dirname, '..', '..', 'lambdas', 'run-migrations.ts'),
+      entry: path.join(__dirname, '..', '..', 'lambdas','rds-sidecars', 'run-migrations.ts'),
       handler: 'handler',
       runtime: LAMBDA_DEFAULTS.runtime,
       // Migraciones pueden tardar en DBs frías; 2 min es suficiente margen
@@ -91,13 +91,13 @@ export class DbMigrations extends Construct {
 
     // Trigger ejecuta la Lambda como Custom Resource en cada cdk deploy.
     // executeOnHandlerChange: re-ejecuta cuando cambia el código o el MIGRATIONS_HASH.
-    const trigger = new Trigger(this, 'MigrationTrigger', {
-      handler: migrationLambda,
-      executeOnHandlerChange: true,
-    });
+    // const trigger = new Trigger(this, 'MigrationTrigger', {
+    //   handler: migrationLambda,
+    //   executeOnHandlerChange: true,
+    // });
 
-    // CloudFormation esperará que la RDS esté en CREATE_COMPLETE antes de invocar
-    // el Trigger. Evita errores de conexión en el primer deploy.
-    trigger.node.addDependency(database);
+    // // CloudFormation esperará que la RDS esté en CREATE_COMPLETE antes de invocar
+    // // el Trigger. Evita errores de conexión en el primer deploy.
+    // trigger.node.addDependency(database);
   }
 }

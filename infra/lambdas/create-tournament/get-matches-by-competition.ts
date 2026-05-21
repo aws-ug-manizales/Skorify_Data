@@ -1,4 +1,4 @@
-import { getMatchesByCompetition } from '../utils/footballDataClient';
+import { getMatchesByCompetition } from '../../utils/footballDataClient';
 
 export const handler = async (event: any): Promise<any> => {
     console.log("Received event:", JSON.stringify(event, null, 2));

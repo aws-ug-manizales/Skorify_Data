@@ -5,7 +5,7 @@ import {
     GetCommand,
     PutCommand,
 } from '@aws-sdk/lib-dynamodb';
-import { buildDbClient } from '../utils/dbClient';
+import { buildDbClient } from '../../utils/dbClient';
 
 interface FootballDataCompetition {
     id: number;

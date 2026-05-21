@@ -64,13 +64,13 @@ export class MatchProcessingStack extends cdk.Stack {
     const finishMatchQueue = createQueue("FinishMatchQueue");
     const notifyUserQueue = createQueue("NotifyUserQueue");
 
-    const workerLambda = createLambda("WorkerLambda", "lambdas/worker.ts", this);
+    const workerLambda = createLambda("WorkerLambda", "lambdas/etl-process/worker.ts", this);
     workerLambda.addEnvironment("EVENT_BUS_NAME", this.bus.eventBusName);
     this.bus.grantPutEventsTo(workerLambda);
 
     const finishMatchLambda = createLambda(
       "FinishMatchLambda",
-      "lambdas/finish-match.ts",
+      "lambdas/etl-process/finish-match.ts",
       this
     );
     finishMatchLambda.addEventSource(
@@ -79,7 +79,7 @@ export class MatchProcessingStack extends cdk.Stack {
 
     const notifyUsersLambda = createLambda(
       "NotifyUsersLambda",
-      "lambdas/notify-users.ts",
+      "lambdas/etl-process/notify-users.ts",
       this
     );
     notifyUsersLambda.addEventSource(
@@ -111,19 +111,19 @@ export class MatchProcessingStack extends cdk.Stack {
 
     const getInstancesLambda = createLambda(
       "GetTournamentInstancesLambda",
-      "lambdas/get-tournament-instances.ts",
+      "lambdas/etl-process/get-tournament-instances.ts",
       this
     );
 
     const calcInstanceLambda = createLambda(
       "CalculateInstanceRankingLambda",
-      "lambdas/calculate-instance-ranking.ts",
+      "lambdas/etl-process/calculate-instance-ranking.ts",
       this
     );
 
     const calcGlobalLambda = createLambda(
       "CalculateGlobalRankingLambda",
-      "lambdas/calculate-global-ranking.ts",
+      "lambdas/etl-process/calculate-global-ranking.ts",
       this
     );
 
