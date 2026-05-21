@@ -68,7 +68,10 @@ export abstract class BaseDataService<
 
   async filter(filters: FindManyOptions<IE>): Promise<IE[]> {
     if (!filters.take) filters.take = 100; // Default limit
+    console.log(filters);
     filters.where = this.applyBoundaries(filters.where);
+    console.log(filters);
+    
     return await this.repository.find(filters);
   }
 
