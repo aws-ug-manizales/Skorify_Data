@@ -83,13 +83,13 @@ export abstract class BaseDataService<
     const camelToSnake = (value: string): string =>
       value.replace(/[A-Z]/g, (letter) => `_${letter.toLowerCase()}`);
 
-    const keys = Object.keys(where);
+    const keys = Object.keys(where ?? {});
 
     const parsedKeys = keys.reduce((acc: any, curr) => {
       const parsedKey = camelToSnake(curr);
 
       if (!acc[parsedKey]) {
-        acc[parsedKey] = where[curr];
+        acc[parsedKey] = (where as any)[curr];
       }
       return acc;
     }, {});
