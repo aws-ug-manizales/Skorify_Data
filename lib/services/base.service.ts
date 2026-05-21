@@ -50,13 +50,9 @@ export abstract class BaseDataService<
   }
 
   async save(data: DE): Promise<DE> {
-    console.log('Sabing');
-    
-    await this.validateData(data);
-    await this.validateRules(data);
     const json = this.mapper.toJson(data);
-    console.log(json);
-    
+    await this.validateData(json);
+    await this.validateRules(json);
     const newEntity = this.repository.create(json as DeepPartial<IE>);
     console.log(newEntity);
     await this.repository.save(newEntity);
@@ -68,9 +64,11 @@ export abstract class BaseDataService<
   }
 
   async modify(data: DE): Promise<DE> {
-    await this.validateData(data);
-    await this.validateRules(data);
-    await this.repository.update(data.id, data as any);
+    const json = this.mapper.toJson(data);
+    await this.validateData(json);
+    await this.validateRules(json);
+
+    await this.repository.update(json.id, json as any);
     const updated = await this.getById(data.id);
     if (!updated) throw new Error(`Entity with id ${data.id} not found`);
     return updated;
@@ -150,16 +148,15 @@ export abstract class BaseDataService<
 
     return parseWhere(where);
   }
-  protected async validateData(data: DE): Promise<void> {
+  protected async validateData(data: IE): Promise<void> {
     await this.validateSchema(data);
   }
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   protected async validateRules(_data: DE): Promise<void> {}
 
-  protected async validateSchema(data: DE): Promise<void> {
-    const json = this.mapper.toJson(data);
-    const entityInstance = plainToInstance(this.entityClass, json);
+  protected async validateSchema(data: IE): Promise<void> {
+    const entityInstance = plainToInstance(this.entityClass, data);
 
     try {
       await validateOrReject(entityInstance, {
