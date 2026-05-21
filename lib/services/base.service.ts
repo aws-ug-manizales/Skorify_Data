@@ -63,16 +63,16 @@ export abstract class BaseDataService<
     return data;
   }
 
-  async deleteById(id: string): Promise<void> {
+  async delete(id: string): Promise<void> {
     await this.repository.update(id, {});
   }
 
-  async modifyById(id: string, data: DE): Promise<DE> {
+  async modify(data: DE): Promise<DE> {
     await this.validateData(data);
     await this.validateRules(data);
-    await this.repository.update(id, data as any);
-    const updated = await this.getById(id);
-    if (!updated) throw new Error(`Entity with id ${id} not found`);
+    await this.repository.update(data.id, data as any);
+    const updated = await this.getById(data.id);
+    if (!updated) throw new Error(`Entity with id ${data.id} not found`);
     return updated;
   }
 
@@ -159,8 +159,6 @@ export abstract class BaseDataService<
 
   protected async validateSchema(data: DE): Promise<void> {
     const json = this.mapper.toJson(data);
-console.log({json});
-
     const entityInstance = plainToInstance(this.entityClass, json);
 
     try {
