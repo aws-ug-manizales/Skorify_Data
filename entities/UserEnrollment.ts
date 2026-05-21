@@ -14,13 +14,13 @@ import { TournamentInstance } from "./TournamentInstance";
 import { Prediction } from "./Prediction";
 
 @Entity("user_enrollments")
-@Unique(["player_id", "tournament_instance_id"])
+@Unique(["user_id", "tournament_instance_id"])
 export class UserEnrollment {
   @PrimaryGeneratedColumn("uuid")
   id!: string;
 
   @Column({ type: "uuid" })
-  player_id!: string;
+  user_id!: string;
 
   @Column({ type: "uuid" })
   tournament_instance_id!: string;
@@ -53,8 +53,8 @@ export class UserEnrollment {
   joined_at!: Date | null;
 
   @ManyToOne(() => User, (u) => u.user_enrollments, { onDelete: "CASCADE" })
-  @JoinColumn({ name: "player_id" })
-  player!: User;
+  @JoinColumn({ name: "user_id" })
+  user!: User;
 
   @ManyToOne(() => TournamentInstance, (t) => t.user_enrollments, {
     onDelete: "CASCADE",
