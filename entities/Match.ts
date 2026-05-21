@@ -69,12 +69,13 @@ export class Match {
   venue!: string;
 
   @CreateDateColumn({ type: "timestamptz" })
-  @IsOptional()
-  created_at?: Date;
+  created_at!: Date;
 
   @UpdateDateColumn({ type: "timestamptz", nullable: true, default: null })
-  @IsOptional()
-  updated_at?: Date | null;
+  updated_at!: Date | null;
+
+  @Column({ type: "timestamptz", nullable: true, default: null })
+  deleted_at!: Date | null;
 
   @ManyToOne("Team", "home_matches", { onDelete: "CASCADE" })
   @JoinColumn({ name: "home_team_id" })

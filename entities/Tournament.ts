@@ -3,6 +3,7 @@ import {
   PrimaryGeneratedColumn,
   Column,
   CreateDateColumn,
+  UpdateDateColumn,
   OneToMany,
 } from "typeorm";
 import type { Team } from "./Team";
@@ -28,6 +29,12 @@ export class Tournament {
 
   @CreateDateColumn({ type: "timestamptz" })
   created_at!: Date;
+
+  @UpdateDateColumn({ type: "timestamptz", nullable: true, default: null })
+  updated_at!: Date | null;
+
+  @Column({ type: "timestamptz", nullable: true, default: null })
+  deleted_at!: Date | null;
 
   @OneToMany("Match", "tournament")
   matches!: Match[];
