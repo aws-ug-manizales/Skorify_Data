@@ -33,15 +33,6 @@ async function publishMatchFinished(detail: MatchFinishedDetail): Promise<void> 
       },
     ],
   });
-
-  const result = await eventBridge.send(command);
-
-  if (result.FailedEntryCount && result.FailedEntryCount > 0) {
-    const failures = result.Entries?.filter((e) => e.ErrorMessage);
-    throw new Error(
-      `Failed to publish events: ${JSON.stringify(failures)}`
-    );
-  }
 }
 
 export const handler = async (): Promise<void> => {

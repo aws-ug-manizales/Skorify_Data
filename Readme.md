@@ -8,169 +8,104 @@ Migraciones de base de datos para la Polla Mundial usando Knex + PostgreSQL en D
 
 
 ## Codigo Mermeid del modelo
-```mermeid
 ---
 config:
   look: neo
   theme: mc
 ---
 erDiagram
-	direction RL
-	USERS {
-		uuid id PK ""  
-		varchar name  ""  
-		varchar email  "UNIQUE"  
-		varchar password_hash  ""  
-		varchar avatar_url  ""  
-		varchar role  "general | global | instance"  
-		timestamp created_at  ""  
-		timestamp updated_at  ""  
-		timestamp deleted_at  ""  
-	}
+    USER {
+        uuid id PK
+        string name
+        string email
+        string avatar_url
+        enum role
+        date created_at
+        date updated_at
+        date deleted_at
+    }
 
-	TOURNAMENTS {
-		uuid id PK ""  
-		varchar name  ""  
-		date start_date  ""  
-		date end_date  ""  
-		timestamp created_at  ""  
-	}
+    TEAM {
+        uuid id PK
+        uuid tournament_id FK
+        string name
+        string shield_url
+        date created_at
+        date deleted_at
+        date updated_at
+    }
 
-	PAYMENTS {
-		uuid id PK ""  
-		uuid user_id FK ""  
-		uuid tournament_id FK ""  
-		varchar state_pay  "failed | pending | paid"  
-		timestamp created_at  ""  
-		timestamp updated_at  ""  
-	}
+    TOURNAMENT {
+        uuid id PK
+        string name
+        string token
+        date start_date
+        date end_date
+        date created_at
+    }
 
-	TEAMS {
-		uuid id PK ""  
-		varchar name  ""  
-		varchar code  "UNIQUE"  
-		varchar shield_url  ""  
-		timestamp created_at  ""  
-		timestamp updated_at  ""  
-		timestamp deleted_at  ""  
-	}
+    TOURNAMENT_INSTANCE {
+        uuid id PK
+        uuid tournament_id FK
+        uuid owner_user_id FK
+        string name
+        TournamentState state
+        date created_at
+        date deleted_at
+        date updated_at
+    }
 
-	TOURNAMENT_TEAMS {
-		uuid id PK ""  
-		uuid team_id FK ""  
-		uuid tournament_id FK ""  
-	}
+    USER_ENROLLMENT {
+        uuid id PK
+        uuid player_id FK
+        uuid tournament_instance_id FK
+        number last_position
+        number current_position
+        number current_score
+        number exact_hits
+        number streak
+        date created_at
+        date updated_at
+        date joined_at
+    }
 
-	GROUPS {
-		uuid id PK ""  
-		uuid tournament_id FK ""  
-		varchar group_name  ""  
-		timestamp created_at  ""  
-		timestamp updated_at  ""  
-		timestamp deleted_at  ""  
-	}
+    MATCH {
+        uuid id PK
+        uuid tournament_id FK
+        uuid home_team_id FK
+        uuid away_team_id FK
+        date kick_off
+        number home_score
+        number away_score
+        MatchStatus status
+        MatchStage stage
+        date created_at
+        date updated_at
+    }
 
-	GROUP_TEAMS {
-		uuid id PK ""  
-		uuid team_id FK ""  
-		uuid group_id FK ""  
-	}
+    PREDICTION {
+        uuid id PK
+        uuid user_enrollment_id FK
+        uuid match_id FK
+        number pred_home_goals
+        number pred_away_goals
+        number earned_points
+        bool has_exact_result
+        date created_at
+        date updated_at
+        date deleted_at
+    }
 
-	MATCHES {
-		uuid id PK ""  
-		uuid home_team_id FK ""  
-		uuid away_team_id FK ""  
-		uuid tournament_id FK ""  
-		timestamp kick_off  ""  
-		int home_goals  ""  
-		int away_goals  ""  
-		varchar status  "'scheduled' | 'in_progress' | 'finished'"  
-		varchar stage  "group | finals"  
-		varchar venue  ""  
-		timestamp created_at  ""  
-		timestamp updated_at  ""  
-	}
-
-	PREDICTIONS {
-		uuid id PK ""  
-		uuid instance_player_id FK ""  
-		uuid match_id FK ""  
-		int pred_home_goals  ""  
-		int pred_away_goals  ""  
-		int earned_points  ""  
-		timestamp created_at  ""  
-		timestamp updated_at  ""  
-		timestamp deleted_at  ""  
-		varchar user_id_match_id  "UNIQUE"  
-	}
-
-	LEADERBOARD {
-		uuid id PK ""  
-		uuid user_id FK ""  
-		uuid tournament_id FK ""  
-		int position ""
-		int total_points  ""  
-		int exact_hits  ""  
-		int outcome_hits  ""  
-		timestamp created_at  ""  
-		timestamp updated_at  ""  
-	}
-
-	INSTANCES {
-		uuid id PK ""
-		uuid tournament_id FK
-		uuid owner_user_id FK
-		uuid validator_user_id FK
-		varchar state "approved, pending, denied"
-		varchar name
-		int price
-		timestamp update_at
-		timestamp deleted_at
-		timestamp created_at
-	}
-
-	INSTANCE_USERS {
-		uuid id PK
-		uuid player_id FK
-		uuid instance_id FK
-		timestamp joined_at
-		timestamp created_at
-	}
-	INSTANCE_RULES {
-		uuid id PK
-		uuid instance_id FK
-		uuid rule_id FK
-		timestamp created_at
-	}
-	%% Reglas para cada instancia
-	RULES {
-		uuid id
-		varchar name
-		varchar description
-		timestamp created_at 
-	}
-
-	INSTANCES||--o{INSTANCE_RULES: ""
-	RULES||--o{INSTANCE_RULES: ""
-
-	TOURNAMENTS||--o{INSTANCES: ""
-	USERS||--o{INSTANCE_USERS: ""
-	INSTANCES||--o{INSTANCE_USERS:""
-	USERS||--o{LEADERBOARD:"ranks"
-	TOURNAMENTS||--o{LEADERBOARD:"ranks"
-	INSTANCE_USERS||--o{PREDICTIONS:"makes"
-	MATCHES||--o{PREDICTIONS:"has"
-	TEAMS||--o{TOURNAMENT_TEAMS:"belong_to"
-	TOURNAMENTS||--o{TOURNAMENT_TEAMS:"belong_to"
-	TOURNAMENTS||--o{MATCHES:"contains"
-	TEAMS||--o{MATCHES:"home_team"
-	TEAMS||--o{MATCHES:"away_team"
-	TEAMS||--o{GROUP_TEAMS:"belongs"
-	GROUPS||--o{GROUP_TEAMS:"has"
-	TOURNAMENTS||--o{GROUPS:"defines"
-	USERS||--o{PAYMENTS:"pays"
-	TOURNAMENTS||--o{PAYMENTS:"belong"
-```
+    %% Relaciones
+    USER ||--o{ TOURNAMENT_INSTANCE : "owner_user_id"
+    USER ||--o{ USER_ENROLLMENT : "player_id"
+    TOURNAMENT ||--o{ TEAM : "tournament_id"
+    TOURNAMENT ||--o{ TOURNAMENT_INSTANCE : "tournament_id"
+    TOURNAMENT_INSTANCE ||--o{ USER_ENROLLMENT : "tournament_instance_id"
+    USER_ENROLLMENT ||--o{ PREDICTION : "user_enrollment_id"
+    TOURNAMENT ||--o{ MATCH : "tournament_id"
+    TEAM ||--o{ MATCH : "home_away_team_id"
+    MATCH ||--o{ PREDICTION : "match_id"
 ## Requisitos
 
 - Node.js 24.14.1 (LTS)
@@ -299,6 +234,20 @@ pnpm add "git+ssh://git@github.com/<org>/<repo>.git#<tag-o-sha>"
 Notas importantes:
 - Esta librería compila el código TypeScript durante el empaquetado (`prepack`), por lo que no necesitas versionar `dist` en el repositorio.
 - Para producción, fija siempre una versión (`tag`) o un commit SHA en lugar de `main`.
+
+## Entidades expuestas como servicios
+
+La librería expone progresivamente cada entidad como un servicio que extiende `BaseDataService<T>` (ver [lib/services/README.md](lib/services/README.md) para el detalle de la API base y cómo crear uno nuevo).
+
+| Entidad | Archivo de entidad | Servicio | Estado |
+|---|---|---|---|
+| User | [entities/User.ts](entities/User.ts) | [lib/services/User.service.ts](lib/services/User.service.ts) | Disponible |
+| Tournament | [entities/Tournament.ts](entities/Tournament.ts) | [lib/services/Tournament.service.ts](lib/services/Tournament.service.ts) | Disponible |
+| Team | [entities/Team.ts](entities/Team.ts) | [lib/services/Team.service.ts](lib/services/Team.service.ts) | Disponible |
+| Match | [entities/Match.ts](entities/Match.ts) | [lib/services/Match.service.ts](lib/services/Match.service.ts) | Disponible |
+| TournamentInstance | [entities/TournamentInstance.ts](entities/TournamentInstance.ts) | [lib/services/TournamentInstance.service.ts](lib/services/TournamentInstance.service.ts) | Disponible |
+| UserEnrollment | [entities/UserEnrollment.ts](entities/UserEnrollment.ts) | [lib/services/UserEnrollment.service.ts](lib/services/UserEnrollment.service.ts) | Disponible |
+| Prediction | [entities/Prediction.ts](entities/Prediction.ts) | [lib/services/Prediction.service.ts](lib/services/Prediction.service.ts) | Disponible |
 
 ## En caso de romperlo todo
 ```bash

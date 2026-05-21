@@ -6,10 +6,8 @@ import {
   UpdateDateColumn,
   OneToMany,
 } from 'typeorm';
-import type { Payment } from './Payment';
-import type { Leaderboard } from './Leaderboard';
-import type { Instance } from './Instance';
-import type { InstanceUser } from './InstanceUser';
+import type { TournamentInstance } from './TournamentInstance';
+import type { UserEnrollment } from './UserEnrollment';
 
 @Entity('users')
 export class User {
@@ -22,18 +20,15 @@ export class User {
   @Column({ type: 'varchar', unique: true })
   email!: string;
 
-  @Column({ type: 'varchar' })
-  password_hash!: string;
-
   @Column({ type: 'varchar', nullable: true })
   avatar_url!: string | null;
 
   @Column({
     type: 'enum',
-    enum: ['general', 'global', 'instance'],
+    enum: ['general', 'admin'],
     default: 'general',
   })
-  role!: 'general' | 'global' | 'instance';
+  role!: 'general' | 'admin';
 
   @CreateDateColumn({ type: 'timestamptz' })
   created_at!: Date;
@@ -44,18 +39,13 @@ export class User {
   @Column({ type: 'timestamptz', nullable: true, default: null })
   deleted_at!: Date | null;
 
-  @OneToMany('Payment', 'user')
-  payments!: Payment[];
+  @OneToMany('UserEnrollment', 'player')
+  user_enrollments!: UserEnrollment[];
 
-  @OneToMany('Leaderboard', 'user')
-  leaderboard!: Leaderboard[];
+  @OneToMany('TournamentInstance', 'owner')
+  owned_instances!: TournamentInstance[];
 
-  @OneToMany('Instance', 'owner')
-  owned_instances!: Instance[];
+  // @OneToMany('TournamentInstance', 'validator')
+  // validated_instances!: TournamentInstance[];
 
-  @OneToMany('Instance', 'validator')
-  validated_instances!: Instance[];
-
-  @OneToMany('InstanceUser', 'player')
-  instance_users!: InstanceUser[];
 }
