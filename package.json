@@ -35,7 +35,7 @@
     "typescript": "^6.0.2"
   },
   "dependencies": {
-    "@skorify/domain": "../Skorify_Domain",
+    "@skorify/domain": "github:aws-ug-manizales/Skorify_Domain#main",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.15.1",
     "reflect-metadata": "^0.2.2",
