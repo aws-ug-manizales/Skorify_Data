@@ -10,8 +10,6 @@ const env = {
   region: process.env.CDK_DEFAULT_REGION,
 };
 
-// Resuelve el ambiente desde `cdk -c env=<name>` o de la variable ENV_NAME.
-// Default: dev. Se usa para indexar parámetros en SSM (/skorify/<env>/...).
 const envName: string =
   app.node.tryGetContext("env") ?? process.env.ENV_NAME ?? "dev";
 
