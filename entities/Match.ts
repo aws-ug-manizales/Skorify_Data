@@ -8,7 +8,7 @@ import {
   JoinColumn,
   OneToMany,
 } from "typeorm";
-import { IsUUID, IsOptional, IsIn, IsInt } from "class-validator";
+import { IsUUID, IsOptional, IsIn, IsInt, IsDate } from "class-validator";
 import type { Team } from "./Team";
 import type { Tournament } from "./Tournament";
 import type { Prediction } from "./Prediction";
@@ -21,15 +21,15 @@ export class Match {
   id!: string;
 
   @Column({ type: "uuid" })
-  @IsUUID()
+  @IsOptional()
   home_team_id!: string;
 
   @Column({ type: "uuid" })
-  @IsUUID()
+  @IsOptional()
   away_team_id!: string;
 
   @Column({ type: "uuid" })
-  @IsUUID()
+  @IsOptional()
   tournament_id!: string;
 
   @Column({ type: "timestamptz" })
@@ -69,26 +69,34 @@ export class Match {
   venue!: string;
 
   @CreateDateColumn({ type: "timestamptz" })
+  @IsDate()
   created_at!: Date;
 
   @UpdateDateColumn({ type: "timestamptz", nullable: true, default: null })
+  @IsDate()
+  @IsOptional()
   updated_at!: Date | null;
 
   @Column({ type: "timestamptz", nullable: true, default: null })
+  @IsOptional()
   deleted_at!: Date | null;
-
+  
   @ManyToOne("Team", "home_matches", { onDelete: "CASCADE" })
   @JoinColumn({ name: "home_team_id" })
+  @IsOptional()
   home_team!: Team;
 
   @ManyToOne("Team", "away_matches", { onDelete: "CASCADE" })
+  @IsOptional()
   @JoinColumn({ name: "away_team_id" })
   away_team!: Team;
 
   @ManyToOne("Tournament", "matches", { onDelete: "CASCADE" })
   @JoinColumn({ name: "tournament_id" })
+  @IsOptional()
   tournament!: Tournament;
 
   @OneToMany("Prediction", "match")
+  @IsOptional()
   predictions!: Prediction[];
 }
