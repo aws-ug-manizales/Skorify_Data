@@ -7,9 +7,23 @@ import {
   In,
   IsNull,
   Repository,
+  Equal,
+  LessThan,
+  Like,
+  MoreThan,
 } from "typeorm";
+
 import { BaseMapper } from "../mappers/base.mapper";
 import { BuiltEntityDomainEvent, Entity } from "@skorify/domain/core";
+
+type OperatorType = "like" | "moreThan" | "in" | "lessThan" | "equals";
+
+type FilterOperator =
+  | {
+      type: OperatorType;
+      value: any;
+    }
+  | any;
 
 export abstract class BaseDataService<
   IE extends { id: string },
@@ -71,32 +85,65 @@ export abstract class BaseDataService<
     console.log(filters);
     filters.where = this.applyBoundaries(filters.where);
     console.log(filters);
-    
+
     return await this.repository.find(filters);
   }
 
   protected applyBoundaries(
     where?: FindOptionsWhere<IE> | FindOptionsWhere<IE>[],
   ): FindOptionsWhere<IE> | FindOptionsWhere<IE>[] {
-    // Implement boundary logic if needed, e.g., based on user permissions
-
     const camelToSnake = (value: string): string =>
       value.replace(/[A-Z]/g, (letter) => `_${letter.toLowerCase()}`);
 
-    const keys = Object.keys(where ?? {});
+    const parseOperator = (operator: FilterOperator) => {
+      if (
+        operator &&
+        typeof operator === "object" &&
+        "type" in operator &&
+        "value" in operator
+      ) {
+        switch (operator.type) {
+          case "like":
+            return Like(operator.value);
 
-    const parsedKeys = keys.reduce((acc: any, curr) => {
-      const parsedKey = camelToSnake(curr);
+          case "moreThan":
+            return MoreThan(operator.value);
 
-      if (!acc[parsedKey]) {
-        acc[parsedKey] = (where as any)[curr];
+          case "lessThan":
+            return LessThan(operator.value);
+
+          case "in":
+            return In(operator.value);
+
+          case "equals":
+            return Equal(operator.value);
+
+          default:
+            return operator.value;
+        }
       }
-      return acc;
-    }, {});
 
-    return parsedKeys || {};
+      return operator;
+    };
+
+    const parseWhere = (obj: any) => {
+      const keys = Object.keys(obj ?? {});
+
+      return keys.reduce((acc: any, curr) => {
+        const parsedKey = camelToSnake(curr);
+
+        acc[parsedKey] = parseOperator(obj[curr]);
+
+        return acc;
+      }, {});
+    };
+
+    if (Array.isArray(where)) {
+      return where.map(parseWhere);
+    }
+
+    return parseWhere(where);
   }
-
   protected async validateData(data: DE): Promise<void> {
     await this.validateSchema(data);
   }
