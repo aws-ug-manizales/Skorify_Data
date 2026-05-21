@@ -76,7 +76,22 @@ export abstract class BaseDataService<
     where?: FindOptionsWhere<IE> | FindOptionsWhere<IE>[],
   ): FindOptionsWhere<IE> | FindOptionsWhere<IE>[] {
     // Implement boundary logic if needed, e.g., based on user permissions
-    return where || {};
+
+    const camelToSnake = (value: string): string =>
+      value.replace(/[A-Z]/g, (letter) => `_${letter.toLowerCase()}`);
+
+    const keys = Object.keys(where);
+
+    const parsedKeys = keys.reduce((acc: any, curr) => {
+      const parsedKey = camelToSnake(curr);
+
+      if (!acc[parsedKey]) {
+        acc[parsedKey] = where[curr];
+      }
+      return acc;
+    }, {});
+
+    return parsedKeys || {};
   }
 
   protected async validateData(data: DE): Promise<void> {
