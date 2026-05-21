@@ -8,12 +8,15 @@ import * as sources from "aws-cdk-lib/aws-lambda-event-sources";
 import * as sfn from "aws-cdk-lib/aws-stepfunctions";
 import * as sfnTasks from "aws-cdk-lib/aws-stepfunctions-tasks";
 import * as ssm from "aws-cdk-lib/aws-ssm";
+import * as cloudwatch from "aws-cdk-lib/aws-cloudwatch";
 import { Duration } from "aws-cdk-lib";
 import {
   SKORIFY_DATA_BUS,
   EventSources,
   DetailTypes,
   QUEUE_DEFAULTS,
+  LAMBDA_DEFAULTS,
+  ENV,
 } from "./constants";
 
 import { createLambda } from "./utils";
@@ -46,6 +49,10 @@ export class MatchProcessingStack extends cdk.Stack {
     );
 
     const vpc = ec2.Vpc.fromLookup(this, "ImportedVpc", { vpcName });
+    const backendUrl =
+      this.node.tryGetContext("backendUrl") ??
+      process.env.BACKEND_URL ??
+      "";
 
     const sharedResources = new SharedResources(this, "SharedResources", { envName });
 
@@ -59,6 +66,18 @@ export class MatchProcessingStack extends cdk.Stack {
       retentionPeriod: Duration.days(14),
     });
 
+    new cloudwatch.Alarm(this, "DLQAlarm", {
+      metric: dlq.metricApproximateNumberOfMessagesVisible({
+        period: Duration.minutes(5),
+        statistic: "Sum",
+      }),
+      threshold: 0,
+      evaluationPeriods: 1,
+      comparisonOperator:
+        cloudwatch.ComparisonOperator.GREATER_THAN_THRESHOLD,
+      alarmDescription: "Mensajes en la DLQ — partidos que no pudieron procesarse",
+    });
+
     const createQueue = (name: string): sqs.Queue =>
       new sqs.Queue(this, name, {
         deadLetterQueue: {
@@ -70,6 +89,7 @@ export class MatchProcessingStack extends cdk.Stack {
 
     const finishMatchQueue = createQueue("FinishMatchQueue");
     const notifyUserQueue = createQueue("NotifyUserQueue");
+    const calculateRankingQueue = createQueue("CalculateRankingQueue");
 
     const workerLambda = createLambda("WorkerLambda", "lambdas/etl-process/worker.ts", this);
     workerLambda.addEnvironment("EVENT_BUS_NAME", this.bus.eventBusName);
@@ -85,8 +105,9 @@ export class MatchProcessingStack extends cdk.Stack {
       "lambdas/etl-process/finish-match.ts",
       this
     );
+    finishMatchLambda.addEnvironment(ENV.BACKEND_URL, backendUrl);
     finishMatchLambda.addEventSource(
-      new sources.SqsEventSource(finishMatchQueue, { batchSize: 10 })
+      new sources.SqsEventSource(finishMatchQueue, { batchSize: 1 })
     );
 
     const notifyUsersLambda = createLambda(
@@ -94,8 +115,19 @@ export class MatchProcessingStack extends cdk.Stack {
       "lambdas/etl-process/notify-users.ts",
       this
     );
+    notifyUsersLambda.addEnvironment(ENV.BACKEND_URL, backendUrl);
     notifyUsersLambda.addEventSource(
-      new sources.SqsEventSource(notifyUserQueue, { batchSize: 10 })
+      new sources.SqsEventSource(notifyUserQueue, { batchSize: 1 })
+    );
+
+    const calculateRankingLambda = createLambda(
+      "CalculateRankingLambda",
+      "lambdas/etl-process/calculate-ranking.ts",
+      this
+    );
+    calculateRankingLambda.addEnvironment(ENV.BACKEND_URL, backendUrl);
+    calculateRankingLambda.addEventSource(
+      new sources.SqsEventSource(calculateRankingQueue, { batchSize: 1 })
     );
 
     new events.Rule(this, "MatchFinishedSkorifyDataRule", {
@@ -121,75 +153,75 @@ export class MatchProcessingStack extends cdk.Stack {
       targets: [new targets.LambdaFunction(workerLambda)],
     });
 
-    const getInstancesLambda = createLambda(
-      "GetTournamentInstancesLambda",
-      "lambdas/etl-process/get-tournament-instances.ts",
-      this
-    );
-
-    const calcInstanceLambda = createLambda(
-      "CalculateInstanceRankingLambda",
-      "lambdas/etl-process/calculate-instance-ranking.ts",
-      this
-    );
-
-    const calcGlobalLambda = createLambda(
-      "CalculateGlobalRankingLambda",
-      "lambdas/etl-process/calculate-global-ranking.ts",
-      this
-    );
-
-    const getInstancesTask = new sfnTasks.LambdaInvoke(
-      this,
-      "GetTournamentInstancesTask",
-      {
-        lambdaFunction: getInstancesLambda,
-        outputPath: "$.Payload",
-      }
-    );
-
-    const calcInstanceTask = new sfnTasks.LambdaInvoke(
-      this,
-      "CalculateInstanceRankingTask",
-      {
-        lambdaFunction: calcInstanceLambda,
-        outputPath: "$.Payload",
-      }
-    );
-
-    const mapInstancesState = new sfn.Map(this, "MapInstancesPerTournament", {
-      itemsPath: "$.instances",
-      maxConcurrency: 5,
-    });
-    mapInstancesState.iterator(calcInstanceTask);
-
-    const calcGlobalTask = new sfnTasks.LambdaInvoke(
-      this,
-      "CalculateGlobalRankingTask",
-      {
-        lambdaFunction: calcGlobalLambda,
-        outputPath: "$.Payload",
-      }
-    );
-
-    const rankingStateMachine = new sfn.StateMachine(
-      this,
-      "RankingStateMachine",
-      {
-        definition: getInstancesTask
-          .next(mapInstancesState)
-          .next(calcGlobalTask),
-        timeout: Duration.minutes(5),
-      }
-    );
-
-    new events.Rule(this, "MatchFinishedSkorifyBackendRule", {
+    new events.Rule(this, "CalculateInstanceRankingSkorifyBackendRule", {
       eventBus: this.bus,
       eventPattern: {
         source: [EventSources.SKORIFY_BACKEND],
-        detailType: [DetailTypes.MATCH_FINISHED],
+        detailType: [DetailTypes.CALCULATE_INSTANCE_RANKING],
       },
-      targets: [new targets.SfnStateMachine(rankingStateMachine)],
+      targets: [new targets.SqsQueue(calculateRankingQueue)],
+    });
+
+    const lambdas = [
+      workerLambda,
+      finishMatchLambda,
+      notifyUsersLambda,
+      calculateRankingLambda,
+    ];
+
+    const queues = [finishMatchQueue, notifyUserQueue, calculateRankingQueue];
+
+    new cloudwatch.Dashboard(this, "MatchProcessingDashboard", {
+      dashboardName: "SkorifyMatchProcessing",
+      widgets: [
+        [
+          new cloudwatch.GraphWidget({
+            title: "Lambda Invocations",
+            left: lambdas.map((l) =>
+              l.metricInvocations({ period: Duration.minutes(5), statistic: "Sum" })
+            ),
+            width: 12,
+          }),
+          new cloudwatch.GraphWidget({
+            title: "Lambda Errors",
+            left: lambdas.map((l) =>
+              l.metricErrors({ period: Duration.minutes(5), statistic: "Sum" })
+            ),
+            width: 12,
+          }),
+        ],
+        [
+          new cloudwatch.GraphWidget({
+            title: "SQS Visible Messages",
+            left: queues.map((q) =>
+              q.metricApproximateNumberOfMessagesVisible({
+                period: Duration.minutes(5),
+                statistic: "Sum",
+              })
+            ),
+            width: 12,
+          }),
+          new cloudwatch.GraphWidget({
+            title: "DLQ Messages",
+            left: [
+              dlq.metricApproximateNumberOfMessagesVisible({
+                period: Duration.minutes(5),
+                statistic: "Sum",
+              }),
+            ],
+            width: 12,
+          }),
+        ],
+        [
+          new cloudwatch.GraphWidget({
+            title: "Lambda Duration (avg)",
+            left: lambdas.map((l) =>
+              l.metricDuration({ period: Duration.minutes(5), statistic: "Avg" })
+            ),
+            width: 24,
+          }),
+        ],
+      ],
     });
 
     new createMatchesFlow(this, "CreateMatchesFlow", { 
