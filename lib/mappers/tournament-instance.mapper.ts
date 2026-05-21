@@ -14,6 +14,7 @@ export class TournamentInstanceMapper extends BaseMapper {
       tournamentId: json.tournament_id,
       state: json.state,
       inviteCode: json.invite_code,
+      createdAt: json.created_at,
     });
 
     return event;
@@ -27,6 +28,7 @@ export class TournamentInstanceMapper extends BaseMapper {
       tournament_id: entity.tournamentId,
       state: entity.state,
       invite_code: entity.inviteCode,
+      created_at: entity.createdAt,
     };
   }
 }

@@ -11,6 +11,7 @@ export class TournamentMapper extends BaseMapper {
       endDate: new Date(json.end_date),
       matchType: json.match_type,
       token: json.token,
+      createdAt: json.created_at,
     });
   }
 
@@ -22,6 +23,7 @@ export class TournamentMapper extends BaseMapper {
       end_date: entity.endDate,
       match_type: entity.matchType,
       token: entity.token,
+      created_at: entity.createdAt,
     };
   }
 }

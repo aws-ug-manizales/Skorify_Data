@@ -49,12 +49,18 @@ export abstract class BaseDataService<
     return null;
   }
 
-  async save(data: DE): Promise<IE> {
+  async save(data: DE): Promise<DE> {
+    console.log('Sabing');
+    
     await this.validateData(data);
     await this.validateRules(data);
     const json = this.mapper.toJson(data);
+    console.log(json);
+    
     const newEntity = this.repository.create(json as DeepPartial<IE>);
-    return await this.repository.save(newEntity);
+    console.log(newEntity);
+    await this.repository.save(newEntity);
+    return data;
   }
 
   async deleteById(id: string): Promise<void> {
@@ -153,6 +159,7 @@ export abstract class BaseDataService<
 
   protected async validateSchema(data: DE): Promise<void> {
     const json = this.mapper.toJson(data);
+console.log({json});
 
     const entityInstance = plainToInstance(this.entityClass, json);
 

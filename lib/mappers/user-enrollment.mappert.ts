@@ -15,6 +15,7 @@ export class UserEnrollmentMapper extends BaseMapper {
       currentScore: json.current_score,
       streak: json.streak,
       maxStreak: json.max_streak,
+      createdAt: json.created_at
     });
   }
 
@@ -30,6 +31,8 @@ export class UserEnrollmentMapper extends BaseMapper {
       current_score: entity.currentScore,
       streak: entity.streak,
       max_streak: entity.maxStreak,
+      created_at: entity.createdAt
+
     };
   }
 }

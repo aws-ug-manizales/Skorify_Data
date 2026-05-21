@@ -9,8 +9,8 @@ importers:
   .:
     dependencies:
       '@skorify/domain':
-        specifier: github:aws-ug-manizales/Skorify_Domain#main
-        version: https://codeload.github.com/aws-ug-manizales/Skorify_Domain/tar.gz/c8a0fa1c7059227beabbbf558d061a08f14087ae
+        specifier: ../Skorify_Domain
+        version: link:../Skorify_Domain
       class-transformer:
         specifier: ^0.5.1
         version: 0.5.1
@@ -63,10 +63,6 @@ packages:
   '@pkgjs/parseargs@0.11.0':
     resolution: {integrity: sha512-+1VkjdD0QBLPodGrJUeqarH8VAIvQODIbwh9XpP5Syisf7YoQgsJKPNFoqqLQlu+VQ/tVSshMR6loPMn8U+dPg==}
     engines: {node: '>=14'}
-
-  '@skorify/domain@https://codeload.github.com/aws-ug-manizales/Skorify_Domain/tar.gz/c8a0fa1c7059227beabbbf558d061a08f14087ae':
-    resolution: {tarball: https://codeload.github.com/aws-ug-manizales/Skorify_Domain/tar.gz/c8a0fa1c7059227beabbbf558d061a08f14087ae}
-    version: 1.0.0
 
   '@sqltools/formatter@1.2.5':
     resolution: {integrity: sha512-Uy0+khmZqUrUGm5dmMqVlnvufZRSK0FbYzVgp0UMstm+F5+W2/jnEEQyc9vo1ZR/E5ZI/B1WjjoTqBqwJL6Krw==}
@@ -721,8 +717,6 @@ snapshots:
 
   '@pkgjs/parseargs@0.11.0':
     optional: true
-
-  '@skorify/domain@https://codeload.github.com/aws-ug-manizales/Skorify_Domain/tar.gz/c8a0fa1c7059227beabbbf558d061a08f14087ae': {}
 
   '@sqltools/formatter@1.2.5': {}
 
