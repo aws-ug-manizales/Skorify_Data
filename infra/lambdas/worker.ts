@@ -1,7 +1,7 @@
 import { EventBridgeClient, PutEventsCommand } from "@aws-sdk/client-eventbridge";
-import { BackendClient } from "./helpers/backend-client.js";
-import { createEventLogger } from "./helpers/logger.js";
-import type { MatchFinishedDetail } from "./helpers/types.js";
+import { BackendClient } from "../utils/backend-client.js";
+import { createEventLogger } from "../utils/logger.js";
+import type { MatchFinishedDetail } from "../utils/types.js";
 
 const eventBridge = new EventBridgeClient();
 const EVENT_BUS_NAME = process.env.EVENT_BUS_NAME ?? "SkorifyDataBus";

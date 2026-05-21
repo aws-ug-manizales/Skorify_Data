@@ -1,8 +1,8 @@
 import type { SQSEvent, SQSRecord } from "aws-lambda";
-import { BackendClient } from "./helpers/backend-client.js";
-import { createEventLogger } from "./helpers/logger.js";
-import { RetryExhaustedError } from "./helpers/retry.js";
-import type { CalculateInstanceRankingDetail } from "./helpers/types.js";
+import { BackendClient } from "../utils/backend-client.js";
+import { createEventLogger } from "../utils/logger.js";
+import { RetryExhaustedError } from "../utils/retry.js";
+import type { CalculateInstanceRankingDetail } from "../utils/types.js";
 
 const BACKEND_URL = process.env.BACKEND_URL ?? "";
 
