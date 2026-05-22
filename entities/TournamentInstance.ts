@@ -7,50 +7,73 @@ import {
   ManyToOne,
   JoinColumn,
   OneToMany,
-} from 'typeorm';
-import type { Tournament } from './Tournament';
-import type { User } from './User';
-import type { UserEnrollment } from './UserEnrollment';
+} from "typeorm";
+import type { Tournament } from "./Tournament";
+import type { User } from "./User";
+import type { UserEnrollment } from "./UserEnrollment";
+import {
+  IsDate,
+  IsDateString,
+  IsOptional,
+  IsString,
+  IsUUID,
+} from "class-validator";
 
-@Entity('tournament_instances')
+@Entity("tournament_instances")
 export class TournamentInstance {
-  @PrimaryGeneratedColumn('uuid')
+  @IsUUID()
+  @PrimaryGeneratedColumn("uuid")
   id!: string;
 
-  @Column({ type: 'uuid' })
-  tournament_id!: string;
-
-  @Column({ type: 'uuid' })
-  owner_user_id!: string;
-
-  @Column({
-    type: 'enum',
-    enum: ['approved', 'pending', 'denied'],
-    default: 'pending',
-  })
-  state!: 'approved' | 'pending' | 'denied';
-
-  @Column({ type: 'varchar' })
+  @Column({ type: "varchar" })
+  @IsString()
   name!: string;
 
-  @CreateDateColumn({ type: 'timestamptz' })
+  @Column({ type: "uuid" })
+  @IsOptional()
+  owner_id!: string;
+
+  @Column({ type: "uuid" })
+  @IsOptional()
+  tournament_id!: string;
+
+  @Column({
+    type: "enum",
+    enum: ["active", "inactive", "suspended", "terminated"],
+    default: "active",
+  })
+  @IsString()
+  state!: "active" | "inactive" | "suspended" | "terminated";
+
+  @Column({ type: "varchar" })
+  @IsString()
+  invite_code!: string;
+
+  @CreateDateColumn({ type: "timestamptz" })
+  @IsDate()
   created_at!: Date;
 
-  @UpdateDateColumn({ type: 'timestamptz', nullable: true, default: null })
+  @UpdateDateColumn({ type: "timestamptz", nullable: true, default: null })
+  @IsDate()
+  @IsOptional()
   updated_at!: Date | null;
 
-  @Column({ type: 'timestamptz', nullable: true, default: null })
+  @Column({ type: "timestamptz", nullable: true, default: null })
+  @IsDate()
+  @IsOptional()
   deleted_at!: Date | null;
 
-  @ManyToOne('Tournament', 'tournament_instances', { onDelete: 'CASCADE' })
-  @JoinColumn({ name: 'tournament_id' })
+  @ManyToOne("Tournament", "tournament_instances", { onDelete: "CASCADE" })
+  @JoinColumn({ name: "tournament_id" })
+  @IsOptional()
   tournament!: Tournament;
 
-  @ManyToOne('User', 'owned_instances', { onDelete: 'CASCADE' })
-  @JoinColumn({ name: 'owner_user_id' })
+  @ManyToOne("User", "owned_instances", { onDelete: "CASCADE" })
+  @JoinColumn({ name: "owner_id" })
+  @IsOptional()
   owner!: User;
 
-  @OneToMany('UserEnrollment', 'tournament_instance')
+  @OneToMany("UserEnrollment", "tournament_instance")
+  @IsOptional()
   user_enrollments!: UserEnrollment[];
-
 }
