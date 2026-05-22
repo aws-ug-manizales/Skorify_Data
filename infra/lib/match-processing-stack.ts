@@ -1,10 +1,13 @@
 import * as cdk from "aws-cdk-lib";
 import { Construct } from "constructs";
+import * as ec2 from "aws-cdk-lib/aws-ec2";
 import * as events from "aws-cdk-lib/aws-events";
 import * as targets from "aws-cdk-lib/aws-events-targets";
 import * as sqs from "aws-cdk-lib/aws-sqs";
-import * as nodejs from "aws-cdk-lib/aws-lambda-nodejs";
 import * as sources from "aws-cdk-lib/aws-lambda-event-sources";
+import * as sfn from "aws-cdk-lib/aws-stepfunctions";
+import * as sfnTasks from "aws-cdk-lib/aws-stepfunctions-tasks";
+import * as ssm from "aws-cdk-lib/aws-ssm";
 import * as cloudwatch from "aws-cdk-lib/aws-cloudwatch";
 import { Duration } from "aws-cdk-lib";
 import {
@@ -16,12 +19,33 @@ import {
   ENV,
 } from "./constants";
 
+import { createLambda } from "./utils";
+
+import { createMatchesFlow } from "./constructs/createMatchesFlow";
+
+export interface MatchProcessingStackProps extends cdk.StackProps {
+  envName: string;
+}
+
 export class MatchProcessingStack extends cdk.Stack {
   public readonly bus: events.EventBus;
 
-  constructor(scope: Construct, id: string, props?: cdk.StackProps) {
+  constructor(scope: Construct, id: string, props: MatchProcessingStackProps) {
     super(scope, id, props);
 
+    const { envName } = props;
+
+    const vpcName = ssm.StringParameter.valueFromLookup(
+      this,
+      `/skorify/${envName}/vpc-name`,
+    );
+
+    const dbSecretArn = ssm.StringParameter.valueFromLookup(
+      this,
+      `/skorify/${envName}/db-secret-arn`,
+    );
+
+    const vpc = ec2.Vpc.fromLookup(this, "ImportedVpc", { vpcName });
     const backendUrl =
       this.node.tryGetContext("backendUrl") ??
       process.env.BACKEND_URL ??
@@ -60,22 +84,16 @@ export class MatchProcessingStack extends cdk.Stack {
     const notifyUserQueue = createQueue("NotifyUserQueue");
     const calculateRankingQueue = createQueue("CalculateRankingQueue");
 
-    const createLambda = (name: string, entry: string): nodejs.NodejsFunction =>
-      new nodejs.NodejsFunction(this, name, {
-        entry,
-        handler: "handler",
-        runtime: LAMBDA_DEFAULTS.runtime,
-        timeout: LAMBDA_DEFAULTS.timeout,
-      });
-
-    const workerLambda = createLambda("WorkerLambda", "lambdas/worker.ts");
+    const workerLambda = createLambda("WorkerLambda", "lambdas/etl-process/worker.ts", this);
+    workerLambda.addEnvironment("EVENT_BUS_NAME", this.bus.eventBusName);
     workerLambda.addEnvironment(ENV.EVENT_BUS_NAME, this.bus.eventBusName);
     workerLambda.addEnvironment(ENV.BACKEND_URL, backendUrl);
     this.bus.grantPutEventsTo(workerLambda);
 
     const finishMatchLambda = createLambda(
       "FinishMatchLambda",
-      "lambdas/finish-match.ts"
+      "lambdas/etl-process/finish-match.ts",
+      this
     );
     finishMatchLambda.addEnvironment(ENV.BACKEND_URL, backendUrl);
     finishMatchLambda.addEventSource(
@@ -84,7 +102,8 @@ export class MatchProcessingStack extends cdk.Stack {
 
     const notifyUsersLambda = createLambda(
       "NotifyUsersLambda",
-      "lambdas/notify-users.ts"
+      "lambdas/etl-process/notify-users.ts",
+      this
     );
     notifyUsersLambda.addEnvironment(ENV.BACKEND_URL, backendUrl);
     notifyUsersLambda.addEventSource(
@@ -93,7 +112,8 @@ export class MatchProcessingStack extends cdk.Stack {
 
     const calculateRankingLambda = createLambda(
       "CalculateRankingLambda",
-      "lambdas/calculate-ranking.ts"
+      "lambdas/etl-process/calculate-ranking.ts",
+      this
     );
     calculateRankingLambda.addEnvironment(ENV.BACKEND_URL, backendUrl);
     calculateRankingLambda.addEventSource(
@@ -193,5 +213,7 @@ export class MatchProcessingStack extends cdk.Stack {
         ],
       ],
     });
+
+    new createMatchesFlow(this, "CreateMatchesFlow", { vpc, dbSecretArn });
   }
 }

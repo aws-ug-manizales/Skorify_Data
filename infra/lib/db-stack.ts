@@ -5,6 +5,7 @@ import * as rds from 'aws-cdk-lib/aws-rds';
 import * as ssm from 'aws-cdk-lib/aws-ssm';
 import * as events from 'aws-cdk-lib/aws-events';
 import { RdsScheduler } from './constructs/rds-scheduler';
+import { DbMigrations } from './constructs/db-migrations';
 import { isProduction } from '../utils/conditionals';
 
 export interface DatabaseStackProps extends cdk.StackProps {
@@ -75,6 +76,13 @@ export class DatabaseStack extends cdk.Stack {
       parameterName: `/skorify/${envName}/db-secret-arn`,
       stringValue: this.database.secret.secretArn,
       description: 'ARN del Secrets Manager secret con credenciales de la RDS',
+    });
+
+    new DbMigrations(this, 'DbMigrations', {
+      vpc,
+      dbSecretArn: this.database.secret.secretArn,
+      dbName: 'skorify',
+      database: this.database,
     });
 
     new cdk.CfnOutput(this, 'DBHost', {
