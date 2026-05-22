@@ -2,6 +2,8 @@ import { EventBridgeClient, PutEventsCommand } from "@aws-sdk/client-eventbridge
 import { getMatchesByCompetition } from '../../utils/footballDataClient';
 import { DDBClient } from '../../utils/ddbClient';
 
+import { DetailTypes, EventSources } from "../../lib/constants.js";
+
 type MapItem = {
     fdataId: string;
     postgresId: string;
@@ -89,8 +91,8 @@ const sendEvents = async (events: any[]): Promise<void> => {
         const eventEntries = eventsChunk.map(match => {
             return {
                 EventBusName: EVENT_BUS_NAME,
-                Source: "SkorifyBackend",    // es el que esta en la configuracion de EventBridgeStack
-                DetailType: "MatchFinished",
+                Source: EventSources.SKORIFY_DATA,    // es el que esta en la configuracion de EventBridgeStack
+                DetailType: DetailTypes.MATCH_FINISHED,
                 Detail: JSON.stringify(match),
             };
         });
