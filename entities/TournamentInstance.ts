@@ -7,64 +7,73 @@ import {
   ManyToOne,
   JoinColumn,
   OneToMany,
-} from 'typeorm';
-import { IsUUID, IsString, IsOptional, IsIn } from 'class-validator';
-import type { Tournament } from './Tournament';
-import type { User } from './User';
-import type { UserEnrollment } from './UserEnrollment';
+} from "typeorm";
+import type { Tournament } from "./Tournament";
+import type { User } from "./User";
+import type { UserEnrollment } from "./UserEnrollment";
+import {
+  IsDate,
+  IsDateString,
+  IsOptional,
+  IsString,
+  IsUUID,
+} from "class-validator";
 
-@Entity('tournament_instances')
+@Entity("tournament_instances")
 export class TournamentInstance {
-  @PrimaryGeneratedColumn('uuid')
-  @IsOptional()
   @IsUUID()
+  @PrimaryGeneratedColumn("uuid")
   id!: string;
 
-  @Column({ type: 'uuid' })
-  @IsUUID()
-  tournament_id!: string;
-
-  @Column({ type: 'uuid' })
-  @IsUUID()
-  owner_user_id!: string;
-
-  @Column({
-    type: 'enum',
-    enum: ['approved', 'pending', 'denied'],
-    default: 'pending',
-  })
-  @IsOptional()
-  @IsIn(['approved', 'pending', 'denied'])
-  state!: 'approved' | 'pending' | 'denied';
-
-  @Column({ type: 'varchar' })
+  @Column({ type: "varchar" })
   @IsString()
   name!: string;
 
-  @CreateDateColumn({ type: 'timestamptz' })
+  @Column({ type: "uuid" })
   @IsOptional()
+  owner_id!: string;
+
+  @Column({ type: "uuid" })
+  @IsOptional()
+  tournament_id!: string;
+
+  @Column({
+    type: "enum",
+    enum: ["active", "inactive", "suspended", "terminated"],
+    default: "active",
+  })
+  @IsString()
+  state!: "active" | "inactive" | "suspended" | "terminated";
+
+  @Column({ type: "varchar" })
+  @IsString()
+  invite_code!: string;
+
+  @CreateDateColumn({ type: "timestamptz" })
+  @IsDate()
   created_at!: Date;
 
-  @UpdateDateColumn({ type: 'timestamptz', nullable: true, default: null })
+  @UpdateDateColumn({ type: "timestamptz", nullable: true, default: null })
+  @IsDate()
   @IsOptional()
   updated_at!: Date | null;
 
-  @Column({ type: 'timestamptz', nullable: true, default: null })
+  @Column({ type: "timestamptz", nullable: true, default: null })
+  @IsDate()
   @IsOptional()
   deleted_at!: Date | null;
 
+  @ManyToOne("Tournament", "tournament_instances", { onDelete: "CASCADE" })
+  @JoinColumn({ name: "tournament_id" })
   @IsOptional()
-  @ManyToOne('Tournament', 'tournament_instances', { onDelete: 'CASCADE' })
-  @JoinColumn({ name: 'tournament_id' })
   tournament!: Tournament;
 
+  @ManyToOne("User", "owned_instances", { onDelete: "CASCADE" })
+  @JoinColumn({ name: "owner_id" })
   @IsOptional()
-  @ManyToOne('User', 'owned_instances', { onDelete: 'CASCADE' })
-  @JoinColumn({ name: 'owner_user_id' })
   owner!: User;
 
+  @OneToMany("UserEnrollment", "tournament_instance")
   @IsOptional()
-  @OneToMany('UserEnrollment', 'tournament_instance')
   user_enrollments!: UserEnrollment[];
-
 }
