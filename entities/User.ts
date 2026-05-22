@@ -5,61 +5,66 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
   OneToMany,
-} from 'typeorm';
-import { IsUUID, IsString, IsEmail, IsOptional, IsIn, IsUrl } from 'class-validator';
-import type { TournamentInstance } from './TournamentInstance';
-import type { UserEnrollment } from './UserEnrollment';
+} from "typeorm";
+import type { TournamentInstance } from "./TournamentInstance";
+import type { UserEnrollment } from "./UserEnrollment";
+import { IsDate, IsOptional, IsUUID } from "class-validator";
 
-@Entity('users')
+@Entity("users")
 export class User {
-  @PrimaryGeneratedColumn('uuid')
-  @IsOptional()
+  @PrimaryGeneratedColumn("uuid")
   @IsUUID()
   id!: string;
 
-  @Column({ type: 'varchar' })
-  @IsString()
+  @Column({ type: "varchar" })
+  @IsOptional()
   name!: string;
 
-  @Column({ type: 'varchar', unique: true })
-  @IsEmail()
+  @Column({ type: "boolean", default: true })
+  @IsOptional()
+  is_active!: boolean;
+
+  @Column({ type: "varchar" })
+  @IsOptional()
+  notification_token!: string;
+
+  @Column({ type: "varchar", unique: true })
+  @IsOptional()
   email!: string;
 
-  @Column({ type: 'varchar', nullable: true })
+  @Column({ type: "varchar", nullable: true })
   @IsOptional()
-  @IsUrl()
-  avatar_url!: string | null;
-
+  image!: string | null;
+  
   @Column({
-    type: 'enum',
-    enum: ['general', 'admin'],
-    default: 'general',
+    type: "enum",
+    enum: ["general", "admin"],
+    default: "general",
   })
   @IsOptional()
-  @IsIn(['general', 'admin'])
-  role!: 'general' | 'admin';
+  role!: "general" | "admin";
 
-  @CreateDateColumn({ type: 'timestamptz' })
-  @IsOptional()
+  @CreateDateColumn({ type: "timestamptz" })
+  @IsDate()
   created_at!: Date;
 
-  @UpdateDateColumn({ type: 'timestamptz', nullable: true, default: null })
+  @UpdateDateColumn({ type: "timestamptz", nullable: true, default: null })
+  @IsDate()
   @IsOptional()
   updated_at!: Date | null;
-
-  @Column({ type: 'timestamptz', nullable: true, default: null })
+  
+  @Column({ type: "timestamptz", nullable: true, default: null })
   @IsOptional()
   deleted_at!: Date | null;
-
+  
+  @OneToMany("UserEnrollment", "player")
   @IsOptional()
-  @OneToMany('UserEnrollment', 'player')
   user_enrollments!: UserEnrollment[];
-
+  
+  @OneToMany("TournamentInstance", "owner")
   @IsOptional()
-  @OneToMany('TournamentInstance', 'owner')
   owned_instances!: TournamentInstance[];
 
   // @OneToMany('TournamentInstance', 'validator')
   // validated_instances!: TournamentInstance[];
-
 }

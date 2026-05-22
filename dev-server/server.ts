@@ -91,7 +91,7 @@ app.put("/:entity/:id", async (_req: Request, res: Response) => {
     await dbClient.connect();
     console.log(`Updating ${entity} with id ${id}:`, _req.body);
     const service = dbClient.getServiceByName(entity);
-    const updatedData = await service.modifyById(id, _req.body);
+    const updatedData = await service.modify(id, _req.body);
     return res.json({ ok: true, [entity]: updatedData });
   } catch (error) {
     console.error(`Error updating ${entity} with id ${id}:`, error);

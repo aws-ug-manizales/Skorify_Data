@@ -1,0 +1,3 @@
+allowBuilds:
+  Skorify_Domain: true
+  "@skorify/domain": true
