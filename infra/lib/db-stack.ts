@@ -21,14 +21,18 @@ export class DatabaseStack extends cdk.Stack {
 
     const { envName, env } = props;
 
-    const vpcName = ssm.StringParameter.valueFromLookup(
-      this,
-      `/skorify/${envName}/vpc-name`,
-    );
-    const dbSecurityGroupId = ssm.StringParameter.valueFromLookup(
-      this,
-      `/skorify/${envName}/db-sg-id`,
-    );
+    // const vpcName = ssm.StringParameter.valueFromLookup(
+    //   this,
+    //   `/skorify/${envName}/vpc-name`,
+    // );
+    // const dbSecurityGroupId = ssm.StringParameter.valueFromLookup(
+    //   this,
+    //   `/skorify/${envName}/db-sg-id`,
+    // );
+
+    const vpcName = "skorify-dev-vpc";
+
+    const dbSecurityGroupId = "sg-03ff86270c4f7cf97";
 
     const vpc = ec2.Vpc.fromLookup(this, 'ImportedVPC', { vpcName });
 

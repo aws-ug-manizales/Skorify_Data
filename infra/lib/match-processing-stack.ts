@@ -22,6 +22,7 @@ import {
 import { createLambda } from "./utils";
 
 import { createMatchesFlow } from "./constructs/createMatchesFlow";
+import { SharedResources } from "./constructs/shared-resources";
 
 export interface MatchProcessingStackProps extends cdk.StackProps {
   envName: string;
@@ -35,10 +36,12 @@ export class MatchProcessingStack extends cdk.Stack {
 
     const { envName } = props;
 
-    const vpcName = ssm.StringParameter.valueFromLookup(
-      this,
-      `/skorify/${envName}/vpc-name`,
-    );
+    // const vpcName = ssm.StringParameter.valueFromLookup(
+    //   this,
+    //   `/skorify/${envName}/vpc-name`,
+    // );
+
+    const vpcName = "skorify-dev-vpc";
 
     const dbSecretArn = ssm.StringParameter.valueFromLookup(
       this,
@@ -51,9 +54,13 @@ export class MatchProcessingStack extends cdk.Stack {
       process.env.BACKEND_URL ??
       "";
 
-    this.bus = new events.EventBus(this, "SkorifyDataBus", {
-      eventBusName: SKORIFY_DATA_BUS,
-    });
+    const sharedResources = new SharedResources(this, "SharedResources", { envName });
+
+    this.bus = sharedResources.bus;
+
+    const matchMappingTable = sharedResources.matchMappingTable;
+    const teamMappingTable = sharedResources.teamMappingTable;
+    const tournamentMappingTable = sharedResources.tournamentMappingTable;
 
     const dlq = new sqs.Queue(this, "DLQ", {
       retentionPeriod: Duration.days(14),
@@ -86,9 +93,12 @@ export class MatchProcessingStack extends cdk.Stack {
 
     const workerLambda = createLambda("WorkerLambda", "lambdas/etl-process/worker.ts", this);
     workerLambda.addEnvironment("EVENT_BUS_NAME", this.bus.eventBusName);
-    workerLambda.addEnvironment(ENV.EVENT_BUS_NAME, this.bus.eventBusName);
-    workerLambda.addEnvironment(ENV.BACKEND_URL, backendUrl);
+    workerLambda.addEnvironment("MATCH_MAPPING_TABLE", matchMappingTable.tableName);
+    workerLambda.addEnvironment("TOURNAMENT_MAPPING_TABLE", tournamentMappingTable.tableName);
+    workerLambda.addEnvironment("FOOTBALL_DATA_API_TOKEN", process.env.FOOTBALL_DATA_API_TOKEN || '');
     this.bus.grantPutEventsTo(workerLambda);
+    matchMappingTable.grantReadData(workerLambda);
+    tournamentMappingTable.grantReadData(workerLambda);
 
     const finishMatchLambda = createLambda(
       "FinishMatchLambda",
@@ -214,6 +224,12 @@ export class MatchProcessingStack extends cdk.Stack {
       ],
     });
 
-    new createMatchesFlow(this, "CreateMatchesFlow", { vpc, dbSecretArn });
+    new createMatchesFlow(this, "CreateMatchesFlow", { 
+      vpc,
+      dbSecretArn,
+      matchMappingTable,
+      teamMappingTable,
+      tournamentMappingTable
+    });
   }
 }
