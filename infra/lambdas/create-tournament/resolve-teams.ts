@@ -1,13 +1,12 @@
-import { DBClient } from 'skorifydata';
-
 import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
 import {
     DynamoDBDocumentClient,
     GetCommand,
     PutCommand,
 } from '@aws-sdk/lib-dynamodb';
+import { BackendClient } from '../../utils/backend-client';
 
-import { buildDbClient } from '../../utils/dbClient';
+const BACKEND_URL = process.env.BACKEND_URL ?? "";
 
 interface FootballDataTeam {
     id: number;
@@ -29,16 +28,14 @@ interface ParsedMatch {
 
 const ddb = DynamoDBDocumentClient.from(new DynamoDBClient({}));
 
-let dbClientPromise: Promise<DBClient> | null = null;
-
-function getDbClient(): Promise<DBClient> {
-    if (!dbClientPromise) {
-        dbClientPromise = buildDbClient();
-    }
-    return dbClientPromise;
+if (!BACKEND_URL) {
+    console.log("batch", "BACKEND_URL not configured, cannot calculate ranking", null);
+    throw new Error("BACKEND_URL not configured");
 }
 
-async function resolveTeam(fdTeam: FootballDataTeam, tournamentId: string): Promise<string> {
+const backend = new BackendClient({ baseUrl: BACKEND_URL });
+
+async function resolveTeam(fdTeam: FootballDataTeam): Promise<string> {
     const fdataId = String(fdTeam.id);
     const table = process.env.TEAM_MAPPING_TABLE;
     if (!table) {
@@ -54,11 +51,10 @@ async function resolveTeam(fdTeam: FootballDataTeam, tournamentId: string): Prom
         return Item.postgresId as string;
     }
 
-    const db = await getDbClient();
-    const created = await db.teams.create({
+    const created = await backend.createTeam({
         name: fdTeam.name,
-        tournament_id: tournamentId,
-        shield_url: fdTeam.crest ?? null,
+        code: fdTeam.tla ?? fdTeam.shortName ?? fdTeam.name,
+        shieldUrl: fdTeam.crest ?? '',
     });
 
     await ddb.send(
@@ -69,7 +65,7 @@ async function resolveTeam(fdTeam: FootballDataTeam, tournamentId: string): Prom
     );
 
     console.log(`Team ${fdataId} created in postgres -> ${created.id}`);
-    return created.id;
+    return created.id ?? '';
 }
 
 export const handler = async (
@@ -78,8 +74,8 @@ export const handler = async (
     console.log('Resolving teams for match:', match.id);
 
     const [home_team_id, away_team_id] = await Promise.all([
-        resolveTeam(match.homeTeam, match.tournament_id),
-        resolveTeam(match.awayTeam, match.tournament_id),
+        resolveTeam(match.homeTeam),
+        resolveTeam(match.awayTeam),
     ]);
 
     return { ...match, home_team_id, away_team_id };

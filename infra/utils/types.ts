@@ -21,7 +21,7 @@ export interface BackendClientConfig {
 }
 
 export interface BackendMatch {
-  id: string;
+  id?: string;
   tournament_id: string;
   home_team_id: string;
   away_team_id: string;
@@ -44,3 +44,18 @@ export interface EventLogEntry {
   timestamp: string;
   metadata?: Record<string, unknown>;
 }
+
+export type BackendTournament = {
+  id?: string;
+  name: string;
+  startDate: string;
+  endDate: string;
+  matchType: "SingleMatchPerRound";
+};
+
+export type BackendTeam = {
+  id?: string;
+  name: string;
+  code: string;
+  shieldUrl: string;
+};

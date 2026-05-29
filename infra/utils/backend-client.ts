@@ -1,5 +1,5 @@
 import { withRetry } from "./retry.js";
-import type { BackendClientConfig, BackendMatch } from "./types.js";
+import type { BackendClientConfig, BackendMatch, BackendTeam, BackendTournament } from "./types.js";
 
 export class BackendClientError extends Error {
   constructor(
@@ -91,5 +91,37 @@ export class BackendClient {
 
   async notifyUsers(detail: Record<string, unknown>): Promise<void> {
     return this.request("POST", "/notifications", detail);
+  }
+
+  async createTournament(detail: BackendTournament): Promise<BackendTournament> {
+    const tournament = {
+      "name": detail.name,
+      "startDate": detail.startDate,
+      "endDate": detail.endDate,
+      "matchType": "SingleMatchPerRound"
+    };
+    return this.request("PUT", "/tournament/create-tournament", tournament);
+  }
+
+
+  async createMatch(detail: BackendMatch): Promise<BackendMatch> {
+    const match = {
+      "homeTeamId": detail.home_team_id,
+      "awayTeamId": detail.away_team_id,
+      "tournamentId": detail.tournament_id,
+      "kickOff": detail.kick_off,
+      "stage": detail.stage,
+      "venue": detail.venue
+    };
+    return this.request("PUT", "/match/create-match", match);
+  }
+
+  async createTeam(detail: BackendTeam): Promise<BackendTeam> {
+    const team = {
+      "name": detail.name,
+      "code": detail.code,
+      "shieldUrl": detail.shieldUrl
+    };
+    return this.request("PUT", "/team/create-team", team);
   }
 }

@@ -1,11 +1,12 @@
-import { DBClient } from 'skorifydata';
 import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
 import {
     DynamoDBDocumentClient,
     GetCommand,
     PutCommand,
 } from '@aws-sdk/lib-dynamodb';
-import { buildDbClient } from '../../utils/dbClient';
+import { BackendClient } from '../../utils/backend-client';
+
+const BACKEND_URL = process.env.BACKEND_URL ?? "";
 
 interface FootballDataCompetition {
     id: number;
@@ -33,14 +34,12 @@ interface HandlerInput {
 
 const ddb = DynamoDBDocumentClient.from(new DynamoDBClient({}));
 
-let dbClientPromise: Promise<DBClient> | null = null;
-
-function getDbClient(): Promise<DBClient> {
-    if (!dbClientPromise) {
-        dbClientPromise = buildDbClient();
-    }
-    return dbClientPromise;
+if (!BACKEND_URL) {
+    console.log("batch", "BACKEND_URL not configured, cannot calculate ranking", null);
+    throw new Error("BACKEND_URL not configured");
 }
+
+const backend = new BackendClient({ baseUrl: BACKEND_URL });
 
 export const handler = async (
     event: HandlerInput,
@@ -63,12 +62,11 @@ export const handler = async (
         console.log(`Tournament ${fdataId} found in mapping -> ${Item.postgresId}`);
         tournament_id = Item.postgresId as string;
     } else {
-        const db = await getDbClient();
-        const created = await db.tournaments.create({
+        const created = await backend.createTournament({
             name: competition.name,
-            token: competition.code,
-            start_date: competition.currentSeason?.startDate ?? null,
-            end_date: competition.currentSeason?.endDate ?? null,
+            startDate: competition.currentSeason?.startDate ?? "",
+            endDate: competition.currentSeason?.endDate ?? "",
+            matchType: "SingleMatchPerRound",
         });
 
         await ddb.send(
@@ -79,7 +77,7 @@ export const handler = async (
         );
 
         console.log(`Tournament ${fdataId} created in postgres -> ${created.id}`);
-        tournament_id = created.id;
+        tournament_id = created.id!;
     }
 
     return {
