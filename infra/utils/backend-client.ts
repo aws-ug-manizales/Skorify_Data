@@ -15,23 +15,79 @@ export class BackendClientError extends Error {
 export class BackendClient {
   private readonly baseUrl: string;
   private readonly retryOptions: BackendClientConfig["retryOptions"];
+  private cachedToken: string | null = null;
+  private tokenExpiration: number = 0;
 
   constructor(config: BackendClientConfig) {
     this.baseUrl = config.baseUrl.replace(/\/+$/, "");
     this.retryOptions = config.retryOptions ?? {};
   }
 
-  private async request<T = void>(
+    // Nuevo método: Obtiene y cachea el token de Cognito
+  private async getM2MToken(): Promise<string> {
+    // Si el token existe y aún le queda más de 1 minuto de vida, lo reutilizamos
+    if (this.cachedToken && Date.now() < this.tokenExpiration) {
+      return this.cachedToken;
+    }
+
+    const clientId = process.env.COGNITO_CLIENT_ID;
+    const clientSecret = process.env.COGNITO_CLIENT_SECRET;
+    const domain = process.env.COGNITO_DOMAIN;
+
+    if (!clientId || !clientSecret || !domain) {
+      throw new Error("Faltan las variables de entorno para Cognito M2M (CLIENT_ID, CLIENT_SECRET o DOMAIN)");
+    }
+
+    const credentials = Buffer.from(`${clientId}:${clientSecret}`).toString('base64');
+    const params = new URLSearchParams();
+    params.append('grant_type', 'client_credentials');
+    params.append('scope', 'data-backend/read');
+
+    const response = await fetch(`${domain}/oauth2/token`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        'Authorization': `Basic ${credentials}`
+      },
+      body: params
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`Fallo al obtener el token M2M de Cognito: ${errorText}`);
+    }
+
+    const data = await response.json() as { access_token: string, expires_in: number };
+    
+    this.cachedToken = data.access_token;
+    // expires_in viene en segundos. Lo pasamos a milisegundos y restamos 60 seg de margen de seguridad
+    this.tokenExpiration = Date.now() + (data.expires_in * 1000) - 60000;
+
+    return this.cachedToken;
+  }
+
+private async request<T = void>(
     method: string,
     path: string,
     body?: unknown
   ): Promise<T> {
     return withRetry(async () => {
+      // 1. Pedimos el token (usará el cacheado si es válido)
+      const token = await this.getM2MToken();
+
+      // 2. Preparamos los headers inyectando la Autorización
+      const headers: Record<string, string> = {
+        "Authorization": `Bearer ${token}`
+      };
+
+      if (body != null) {
+        headers["Content-Type"] = "application/json";
+      }
+
+      // 3. Hacemos la petición al backend con el token incluido
       const response = await fetch(`${this.baseUrl}${path}`, {
         method,
-        headers: body != null
-          ? { "Content-Type": "application/json" }
-          : undefined,
+        headers,  
         body: body != null ? JSON.stringify(body) : undefined,
       });
 
