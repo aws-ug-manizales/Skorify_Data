@@ -10,6 +10,7 @@ exports.up = async function (knex) {
   await knex.schema.alterTable('users', (t) => {
     t.boolean('is_active').notNullable().defaultTo(true);
     t.string('notification_token').nullable().defaultTo(null);
+    t.string('sub').nullable().defaultTo(null);
   });
 
   // ── tournaments: add updated_at, deleted_at, match_type ───────────────────
@@ -139,6 +140,7 @@ exports.down = async function (knex) {
   await knex.schema.alterTable('users', (t) => {
     t.dropColumn('notification_token');
     t.dropColumn('is_active');
+    t.dropColumn('sub');
   });
   await knex.schema.alterTable('users', (t) => {
     t.renameColumn('image', 'avatar_url');

@@ -8,6 +8,7 @@ exports.up = async function (knex) {
     t.uuid('id').primary().defaultTo(knex.fn.uuid());
     t.string('name').notNullable();
     t.string('email').notNullable().unique();
+    t.string('sub').notNullable().unique();
     t.string('avatar_url');
     t.enu('role', ['general', 'admin']).notNullable().defaultTo('general');
     t.timestamp('created_at', { useTz: true }).defaultTo(knex.fn.now());

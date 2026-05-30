@@ -32,6 +32,10 @@ export class User {
   @IsOptional()
   email!: string;
 
+  @Column({ type: "varchar", unique: true })
+  @IsOptional()
+  sub!: string;
+
   @Column({ type: "varchar", nullable: true })
   @IsOptional()
   image!: string | null;
