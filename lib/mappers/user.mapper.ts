@@ -7,6 +7,7 @@ export class UserMapper extends BaseMapper {
     return UserEntity.build({
       id: json.id,
       name: json.name,
+      sub: json.sub,
       isActive: json.is_active,
       notificationToken: json.notification_token,
       email: json.email,
@@ -22,6 +23,7 @@ export class UserMapper extends BaseMapper {
     return {
       id: entity.id,
       name: entity.name,
+      sub: entity.sub,
       is_active: entity.isActive,
       notification_token: entity.notificationToken,
       email: entity.email,
