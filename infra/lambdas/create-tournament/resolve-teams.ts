@@ -4,36 +4,15 @@ import {
     GetCommand,
     PutCommand,
 } from '@aws-sdk/lib-dynamodb';
-import { BackendClient } from '../../utils/backend-client';
+import { initBackedClient } from '../../utils/backend-client';
+import { createEventLogger } from '../../utils/logger';
 
-const BACKEND_URL = process.env.BACKEND_URL ?? "";
+import type { FootballDataTeam, ParsedMatch } from '../../utils/types';
 
-interface FootballDataTeam {
-    id: number;
-    name: string;
-    shortName?: string;
-    tla?: string;
-    crest?: string;
-}
-
-interface ParsedMatch {
-    id: number;
-    utcDate: string;
-    status: string;
-    matchday: number;
-    tournament_id: string;
-    homeTeam: FootballDataTeam;
-    awayTeam: FootballDataTeam;
-}
+const logger = createEventLogger("ResolveTeamsLambda");
 
 const ddb = DynamoDBDocumentClient.from(new DynamoDBClient({}));
-
-if (!BACKEND_URL) {
-    console.log("batch", "BACKEND_URL not configured, cannot calculate ranking", null);
-    throw new Error("BACKEND_URL not configured");
-}
-
-const backend = new BackendClient({ baseUrl: BACKEND_URL });
+const backend = initBackedClient(logger);
 
 async function resolveTeam(fdTeam: FootballDataTeam): Promise<string> {
     const fdataId = String(fdTeam.id);

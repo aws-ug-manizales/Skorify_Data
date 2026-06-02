@@ -1,6 +1,16 @@
 import { withRetry } from "./retry.js";
 import type { BackendClientConfig, BackendMatch, BackendTeam, BackendTournament } from "./types.js";
 
+export const initBackedClient = (logger: any): BackendClient => {
+  const BACKEND_URL = process.env.BACKEND_URL ?? "";
+  if (!BACKEND_URL) {
+    logger.failed("batch", "BACKEND_URL not configured", null);
+    throw new Error("BACKEND_URL not configured");
+  }
+  return new BackendClient({ baseUrl: BACKEND_URL });
+};
+
+
 export class BackendClientError extends Error {
   constructor(
     message: string,

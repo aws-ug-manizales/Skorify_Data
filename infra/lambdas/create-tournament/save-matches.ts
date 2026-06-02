@@ -1,19 +1,13 @@
 import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
 import { DynamoDBDocumentClient, PutCommand } from '@aws-sdk/lib-dynamodb';
-import { BackendClient } from '../../utils/backend-client';
+import { initBackedClient } from '../../utils/backend-client';
 import type { BackendMatch } from '../../utils/types';
+import { createEventLogger } from '../../utils/logger';
 
-const BACKEND_URL = process.env.BACKEND_URL ?? "";
 
-if (!BACKEND_URL) {
-    console.log("batch", "BACKEND_URL not configured, cannot calculate ranking", null);
-    throw new Error("BACKEND_URL not configured");
-}
-
-const backend = new BackendClient({ baseUrl: BACKEND_URL });
-
+const logger = createEventLogger("SaveMatchesLambda");
 const ddb = DynamoDBDocumentClient.from(new DynamoDBClient({}));
-
+const backend = initBackedClient(logger);
 
 export const handler = async (event: any): Promise<void> => {
     console.log('Received event:', JSON.stringify(event, null, 2));

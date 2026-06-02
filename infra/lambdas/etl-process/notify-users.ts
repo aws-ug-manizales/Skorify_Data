@@ -1,11 +1,10 @@
 import type { SQSEvent, SQSRecord } from "aws-lambda";
-import { BackendClient } from "../../utils/backend-client.js";
+import { initBackedClient } from "../../utils/backend-client.js";
 import { createEventLogger } from "../../utils/logger.js";
 import { RetryExhaustedError } from "../../utils/retry.js";
 
-const BACKEND_URL = process.env.BACKEND_URL ?? "";
-
 const logger = createEventLogger("NotifyUsersLambda");
+const backend = initBackedClient(logger);
 
 function parseRecord(record: SQSRecord): Record<string, unknown> | null {
   try {
@@ -23,13 +22,6 @@ function parseRecord(record: SQSRecord): Record<string, unknown> | null {
 
 export const handler = async (event: SQSEvent): Promise<void> => {
   logger.started("batch", `Received ${event.Records.length} record(s)`);
-
-  if (!BACKEND_URL) {
-    logger.failed("batch", "BACKEND_URL not configured, cannot send notifications", null);
-    return;
-  }
-
-  const backend = new BackendClient({ baseUrl: BACKEND_URL });
 
   for (const record of event.Records) {
     const detail = parseRecord(record);

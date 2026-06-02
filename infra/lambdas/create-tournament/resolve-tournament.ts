@@ -4,42 +4,14 @@ import {
     GetCommand,
     PutCommand,
 } from '@aws-sdk/lib-dynamodb';
-import { BackendClient } from '../../utils/backend-client';
+import { initBackedClient } from '../../utils/backend-client';
 
-const BACKEND_URL = process.env.BACKEND_URL ?? "";
+import type { FootballDataCompetition, FootballDataTeam, HandlerInput, ParsedMatch } from '../../utils/types';
+import { createEventLogger } from '../../utils/logger';
 
-interface FootballDataCompetition {
-    id: number;
-    name: string;
-    code: string;
-    currentSeason?: {
-        startDate?: string;
-        endDate?: string;
-    };
-}
-
-interface ParsedMatch {
-    id: number;
-    utcDate: string;
-    status: string;
-    matchday: number;
-    homeTeam: { id: number; name: string; shortName?: string; tla?: string; crest?: string };
-    awayTeam: { id: number; name: string; shortName?: string; tla?: string; crest?: string };
-}
-
-interface HandlerInput {
-    matches: ParsedMatch[];
-    competition: FootballDataCompetition;
-}
-
+const logger = createEventLogger("ResolveTournamentLambda");
 const ddb = DynamoDBDocumentClient.from(new DynamoDBClient({}));
-
-if (!BACKEND_URL) {
-    console.log("batch", "BACKEND_URL not configured, cannot calculate ranking", null);
-    throw new Error("BACKEND_URL not configured");
-}
-
-const backend = new BackendClient({ baseUrl: BACKEND_URL });
+const backend = initBackedClient(logger);
 
 export const handler = async (
     event: HandlerInput,

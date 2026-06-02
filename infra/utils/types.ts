@@ -1,5 +1,27 @@
 import type { RetryOptions } from "./retry.js";
 
+// football data types
+
+export interface FootballDataTeam {
+    id: number;
+    name: string;
+    shortName?: string;
+    tla?: string;
+    crest?: string;
+}
+
+export interface FootballDataCompetition {
+    id: number;
+    name: string;
+    code: string;
+    currentSeason?: {
+        startDate?: string;
+        endDate?: string;
+    };
+}
+
+// data team types
+
 export interface MatchFinishedDetail {
   match_id: string;
   tournament_id: string;
@@ -20,6 +42,36 @@ export interface BackendClientConfig {
   retryOptions?: RetryOptions;
 }
 
+export type ProcessingStatus = "STARTED" | "RETRYING" | "SUCCESS" | "FAILED";
+
+export interface EventLogEntry {
+  match_id: string;
+  instance_id?: string;
+  status: ProcessingStatus;
+  message: string;
+  attempt?: number;
+  timestamp: string;
+  metadata?: Record<string, unknown>;
+}
+
+
+export interface ParsedMatch {
+    id: number;
+    utcDate: string;
+    status: string;
+    matchday: number;
+    tournament_id: string;
+    homeTeam: FootballDataTeam;
+    awayTeam: FootballDataTeam;
+}
+
+export interface HandlerInput {
+    matches: ParsedMatch[];
+    competition: FootballDataCompetition;
+}
+
+// backend client types
+
 export interface BackendMatch {
   id?: string;
   tournament_id: string;
@@ -31,18 +83,6 @@ export interface BackendMatch {
   status: string;
   stage: string;
   venue: string;
-}
-
-export type ProcessingStatus = "STARTED" | "RETRYING" | "SUCCESS" | "FAILED";
-
-export interface EventLogEntry {
-  match_id: string;
-  instance_id?: string;
-  status: ProcessingStatus;
-  message: string;
-  attempt?: number;
-  timestamp: string;
-  metadata?: Record<string, unknown>;
 }
 
 export type BackendTournament = {
