@@ -18,6 +18,7 @@ export const handler = async (
 ): Promise<{ matches: (ParsedMatch & { tournament_id: string })[] }> => {
     const { matches, competition } = event;
     const fdataId = String(competition.id);
+    logger.started(fdataId, 'Resolving tournament for competition', { competition, matches });
 
     const table = process.env.TOURNAMENT_MAPPING_TABLE;
     if (!table) {
@@ -31,7 +32,7 @@ export const handler = async (
     let tournament_id: string;
 
     if (Item?.postgresId) {
-        console.log(`Tournament ${fdataId} found in mapping -> ${Item.postgresId}`);
+        logger.info(fdataId, `Tournament ${fdataId} found in mapping -> ${Item.postgresId}`, { competition });
         tournament_id = Item.postgresId as string;
     } else {
         const created = await backend.createTournament({
@@ -48,10 +49,11 @@ export const handler = async (
             }),
         );
 
-        console.log(`Tournament ${fdataId} created in postgres -> ${created.id}`);
+        logger.info(fdataId, `Tournament ${fdataId} created in postgres -> ${created.id}`, { competition });
         tournament_id = created.id!;
     }
 
+    logger.success(fdataId, 'Tournament resolved successfully', { competition, tournament_id });
     return {
         matches: matches.map(match => ({ ...match, tournament_id })),
     };

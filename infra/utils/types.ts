@@ -42,7 +42,7 @@ export interface BackendClientConfig {
   retryOptions?: RetryOptions;
 }
 
-export type ProcessingStatus = "STARTED" | "RETRYING" | "SUCCESS" | "FAILED";
+export type ProcessingStatus = "STARTED" | "RETRYING" | "SUCCESS" | "FAILED" | "INFO";
 
 export interface EventLogEntry {
   match_id: string;

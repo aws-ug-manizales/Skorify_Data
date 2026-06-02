@@ -10,16 +10,13 @@ const ddb = DynamoDBDocumentClient.from(new DynamoDBClient({}));
 const backend = initBackedClient(logger);
 
 export const handler = async (event: any): Promise<void> => {
-    console.log('Received event:', JSON.stringify(event, null, 2));
-    console.log('Saving matches data:', JSON.stringify(event, null, 2));
-
-    console.log('DB client initialized, saving match data...');
+    
     try {
-        console.log('DB client connected successfully.');
         const matchData = parseEvent(event);
+        logger.started(matchData.id, "Received event to save match data", { event });
         const matchMapped = mapMatchData(matchData);
         const saved = await backend.createMatch(matchMapped);
-        console.log('Match data saved successfully, postgresId:', saved.id);
+        logger.info(matchData.id, 'Match data saved successfully', { event, postgresId: saved.id });
 
         const table = process.env.MATCH_MAPPING_TABLE;
         if (table && matchData.id !== undefined && matchData.id !== null) {
@@ -32,12 +29,11 @@ export const handler = async (event: any): Promise<void> => {
                     },
                 }),
             );
-            console.log(
-                `Mapping written: fdataId=${matchData.id} -> postgresId=${saved.id}`,
-            );
+            logger.info(matchData.id, `Mapping written: fdataId=${matchData.id} -> postgresId=${saved.id}`, { event });
         }
+        logger.success(matchData.id, "Match data processing completed", { event, postgresId: saved.id });
     } catch (error) {
-        console.error('Error saving match data:', error);
+        logger.failed("Error", 'Error saving match data:', { event, error });
         throw error;
     }
 };
@@ -47,7 +43,7 @@ const parseEvent = (event: any): any => {
         try {
             return JSON.parse(event);
         } catch (error) {
-            console.error('Error parsing event string:', error);
+            logger.failed('event', 'Error parsing event string:', { event, error });
             throw new Error('Invalid event format');
         }
     }

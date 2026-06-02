@@ -16,6 +16,7 @@ const backend = initBackedClient(logger);
 
 async function resolveTeam(fdTeam: FootballDataTeam): Promise<string> {
     const fdataId = String(fdTeam.id);
+    logger.info(fdataId, "Resolving team", { team: fdTeam });
     const table = process.env.TEAM_MAPPING_TABLE;
     if (!table) {
         throw new Error('TEAM_MAPPING_TABLE env var not set');
@@ -26,7 +27,7 @@ async function resolveTeam(fdTeam: FootballDataTeam): Promise<string> {
     );
 
     if (Item?.postgresId) {
-        console.log(`Team ${fdataId} found in mapping -> ${Item.postgresId}`);
+        logger.info(fdataId, `Team ${fdataId} found in mapping -> ${Item.postgresId}`, { team: fdTeam });
         return Item.postgresId as string;
     }
 
@@ -43,19 +44,20 @@ async function resolveTeam(fdTeam: FootballDataTeam): Promise<string> {
         }),
     );
 
-    console.log(`Team ${fdataId} created in postgres -> ${created.id}`);
+    logger.info(fdataId, `Team ${fdataId} created in postgres -> ${created.id}`, { team: fdTeam });
     return created.id ?? '';
 }
 
 export const handler = async (
     match: ParsedMatch,
 ): Promise<ParsedMatch & { home_team_id: string; away_team_id: string }> => {
-    console.log('Resolving teams for match:', match.id);
+    logger.started(String(match.id), 'Resolving teams for match', { match });
 
     const [home_team_id, away_team_id] = await Promise.all([
         resolveTeam(match.homeTeam),
         resolveTeam(match.awayTeam),
     ]);
 
+    logger.success(String(match.id), 'Teams resolved successfully', { match, home_team_id, away_team_id });
     return { ...match, home_team_id, away_team_id };
 };

@@ -58,5 +58,9 @@ export function createEventLogger(lambdaName: string) {
       const errorMessage = error instanceof Error ? error.message : String(error);
       this.log(matchId, "FAILED", `${message}: ${errorMessage}`, metadata);
     },
+
+    info(matchId: string, message: string, metadata?: Record<string, unknown>) {
+      this.log(matchId, "INFO", message, metadata);
+    },
   };
 }
