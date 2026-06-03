@@ -65,6 +65,11 @@ jobs:
           role-to-assume: ${{ secrets.AWS_DATA_DEPLOY_ROLE_ARN_PROD }}
           aws-region: ${{ env.AWS_REGION }}
 
+      # Orden importante: database primero (publica /skorify/prod/db-secret-arn),
+      # luego event-bridge (que lo lee). En un entorno fresco no se puede
+      # desplegar --all porque el event-bridge lo resuelve en synth-time.
       - name: CDK deploy (env=prod)
         working-directory: infra
-        run: pnpm exec cdk deploy --all --context env=prod --require-approval never
+        run: |
+          pnpm exec cdk deploy skorify-database-prod --context env=prod --require-approval never
+          pnpm exec cdk deploy skorify-event-bridge-prod --context env=prod --require-approval never
