@@ -74,23 +74,26 @@ export abstract class BaseDataService<
     return updated;
   }
 
-  async getAll(): Promise<IE[]> {
-    return await this.repository.find();
+  async getAll(): Promise<DE[]> {
+    const total = await this.repository.find();
+    const parsed = total.map((item) => this.mapper.fromJson(item));
+    return parsed.map((event) => event.payload);
   }
 
-  async getByIDs(ids: string[]): Promise<IE[]> {
-    return await this.repository.find({
+  async getByIDs(ids: string[]): Promise<DE[]> {
+    const total = await this.repository.find({
       where: { id: In(ids) } as FindOptionsWhere<IE>,
     });
+    const parsed = total.map((item) => this.mapper.fromJson(item));
+    return parsed.map((event) => event.payload);
   }
 
-  async filter(filters: FindManyOptions<IE>): Promise<IE[]> {
-    if (!filters.take) filters.take = 100; // Default limit
-    console.log(filters);
+  async filter(filters: FindManyOptions<IE>): Promise<DE[]> {
+    if (!filters.take) filters.take = 200; // Default limit
     filters.where = this.applyBoundaries(filters.where);
-    console.log(filters);
-
-    return await this.repository.find(filters);
+    const total = await this.repository.find(filters);
+    const parsed = total.map((item) => this.mapper.fromJson(item));
+    return parsed.map((event) => event.payload);
   }
 
   protected applyBoundaries(
