@@ -122,7 +122,10 @@ export class MatchProcessingStack extends cdk.Stack {
     );
     notifyUsersLambda.addEnvironment(ENV.BACKEND_URL, backendUrl);
     notifyUsersLambda.addEventSource(
-      new sources.SqsEventSource(notifyUserQueue, { batchSize: 1 })
+      new sources.SqsEventSource(notifyUserQueue, {
+        batchSize: 5,
+        reportBatchItemFailures: true,
+      })
     );
 
     const calculateRankingLambda = createLambda(
@@ -132,7 +135,10 @@ export class MatchProcessingStack extends cdk.Stack {
     );
     calculateRankingLambda.addEnvironment(ENV.BACKEND_URL, backendUrl);
     calculateRankingLambda.addEventSource(
-      new sources.SqsEventSource(calculateRankingQueue, { batchSize: 1 })
+      new sources.SqsEventSource(calculateRankingQueue, {
+        batchSize: 5,
+        reportBatchItemFailures: true,
+      })
     );
 
     new events.Rule(this, "MatchFinishedSkorifyDataRule", {
