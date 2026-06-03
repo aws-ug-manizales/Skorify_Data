@@ -5,57 +5,70 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
   OneToMany,
-} from 'typeorm';
-import type { Payment } from './Payment';
-import type { Leaderboard } from './Leaderboard';
-import type { Instance } from './Instance';
-import type { InstanceUser } from './InstanceUser';
+} from "typeorm";
+import type { TournamentInstance } from "./TournamentInstance";
+import type { UserEnrollment } from "./UserEnrollment";
+import { IsDate, IsOptional, IsUUID } from "class-validator";
 
-@Entity('users')
+@Entity("users")
 export class User {
-  @PrimaryGeneratedColumn('uuid')
+  @PrimaryGeneratedColumn("uuid")
+  @IsUUID()
   id!: string;
 
-  @Column({ type: 'varchar' })
+  @Column({ type: "varchar" })
+  @IsOptional()
   name!: string;
 
-  @Column({ type: 'varchar', unique: true })
+  @Column({ type: "boolean", default: true })
+  @IsOptional()
+  is_active!: boolean;
+
+  @Column({ type: "varchar" })
+  @IsOptional()
+  notification_token!: string;
+
+  @Column({ type: "varchar", unique: true })
+  @IsOptional()
   email!: string;
 
-  @Column({ type: 'varchar' })
-  password_hash!: string;
+  @Column({ type: "varchar", unique: true })
+  @IsOptional()
+  sub!: string;
 
-  @Column({ type: 'varchar', nullable: true })
-  avatar_url!: string | null;
-
+  @Column({ type: "varchar", nullable: true })
+  @IsOptional()
+  image!: string | null;
+  
   @Column({
-    type: 'enum',
-    enum: ['general', 'global', 'instance'],
-    default: 'general',
+    type: "enum",
+    enum: ["general", "admin"],
+    default: "general",
   })
-  role!: 'general' | 'global' | 'instance';
+  @IsOptional()
+  role!: "general" | "admin";
 
-  @CreateDateColumn({ type: 'timestamptz' })
+  @CreateDateColumn({ type: "timestamptz" })
+  @IsDate()
   created_at!: Date;
 
-  @UpdateDateColumn({ type: 'timestamptz', nullable: true, default: null })
+  @UpdateDateColumn({ type: "timestamptz", nullable: true, default: null })
+  @IsDate()
+  @IsOptional()
   updated_at!: Date | null;
-
-  @Column({ type: 'timestamptz', nullable: true, default: null })
+  
+  @Column({ type: "timestamptz", nullable: true, default: null })
+  @IsOptional()
   deleted_at!: Date | null;
+  
+  @OneToMany("UserEnrollment", "player")
+  @IsOptional()
+  user_enrollments!: UserEnrollment[];
+  
+  @OneToMany("TournamentInstance", "owner")
+  @IsOptional()
+  owned_instances!: TournamentInstance[];
 
-  @OneToMany('Payment', 'user')
-  payments!: Payment[];
-
-  @OneToMany('Leaderboard', 'user')
-  leaderboard!: Leaderboard[];
-
-  @OneToMany('Instance', 'owner')
-  owned_instances!: Instance[];
-
-  @OneToMany('Instance', 'validator')
-  validated_instances!: Instance[];
-
-  @OneToMany('InstanceUser', 'player')
-  instance_users!: InstanceUser[];
+  // @OneToMany('TournamentInstance', 'validator')
+  // validated_instances!: TournamentInstance[];
 }

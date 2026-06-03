@@ -43,5 +43,5 @@
     "moduleDetection": "force",
     "skipLibCheck": true,
   },
-  "exclude": ["dist", "dev-server", "node_modules"]
+  "exclude": ["dist", "dev-server", "node_modules", "infra"]
 }

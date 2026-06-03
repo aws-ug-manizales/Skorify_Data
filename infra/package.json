@@ -1,0 +1,36 @@
+{
+  "name": "infra",
+  "version": "0.1.0",
+  "scripts": {
+    "build": "tsc",
+    "watch": "tsc -w",
+    "test": "jest",
+    "cdk": "cdk",
+    "synth:yaml": "cdk synth --all > cdk.out/all.yaml",
+    "synth:database": "cdk synth skorifyDatabase > cdk.out/database.yaml"
+  },
+  "devDependencies": {
+    "@aws-sdk/client-rds": "^3.658.0",
+    "@types/aws-lambda": "^8.10.0",
+    "@types/jest": "^30",
+    "@types/node": "^24.12.4",
+    "aws-cdk": "2.1121.0",
+    "esbuild": "^0.24.0",
+    "jest": "^30",
+    "ts-jest": "^29",
+    "ts-node": "^10.9.2",
+    "typescript": "~5.9.3"
+  },
+  "dependencies": {
+    "@aws-sdk/client-dynamodb": "^3.658.0",
+    "@aws-sdk/client-eventbridge": "^3.658.0",
+    "@aws-sdk/client-secrets-manager": "^3.658.0",
+    "@aws-sdk/lib-dynamodb": "^3.658.0",
+    "aws-cdk-lib": "^2.252.0",
+    "constructs": "^10.5.0",
+    "knex": "^3.2.9",
+    "node-fetch": "^3.3.2",
+    "pg": "^8.20.0",
+    "skorifydata": "link:.."
+  }
+}

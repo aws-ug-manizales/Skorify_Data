@@ -1,14 +1,7 @@
 export { User } from './User';
 export { Tournament } from './Tournament';
 export { Team } from './Team';
-export { TournamentTeam } from './TournamentTeam';
-export { Group } from './Group';
-export { GroupTeam } from './GroupTeam';
 export { Match } from './Match';
 export { Prediction } from './Prediction';
-export { Payment } from './Payment';
-export { Leaderboard } from './Leaderboard';
-export { Rule } from './Rule';
-export { Instance } from './Instance';
-export { InstanceUser } from './InstanceUser';
-export { InstanceRule } from './InstanceRule';
+export { UserEnrollment } from './UserEnrollment';
+export { TournamentInstance } from './TournamentInstance';

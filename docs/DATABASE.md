@@ -2,340 +2,201 @@
 
 ## 1. Descripción General
 
-El sistema modela una plataforma de apuestas deportivas basada en torneos de fútbol. Los usuarios se unen a instancias (pollas) dentro de un torneo y realizan predicciones sobre partidos, acumulando puntos según su precisión. El sistema incluye control de pagos, organización de equipos por torneo y grupos, reglas configurables por instancia, y un ranking (leaderboard).
+El sistema modela una plataforma de apuestas deportivas basada en torneos de fútbol. Los usuarios se unen a instancias (pollas) dentro de un torneo y realizan predicciones sobre partidos, acumulando puntos según su precisión. El sistema incluye organización de equipos por torneo y grupos y un ranking (user_enrollments).
 
 ---
-
 ## 2. Entidades y Atributos
 
-### USERS
+### USER
 Representa a los usuarios del sistema.
 
 **Atributos:**
-- id (PK): Identificador único
-- name: Nombre del usuario
-- email: Correo electrónico (único)
-- password_hash: Contraseña encriptada
-- avatar_url: Imagen de perfil
-- role: Rol del usuario (general | global | instance)
-- created_at: Fecha de creación
-- updated_at: Fecha de actualización
-- deleted_at: Fecha de eliminación lógica
+- `id` (PK, uuid): Identificador único
+- `name` (string): Nombre del usuario
+- `email` (string): Correo electrónico (único)
+- `avatar_url` (string): Imagen de perfil
+- `role` (enum): Rol del usuario (`general` | `admin`)
+- `created_at` (date): Fecha de creación
+- `updated_at` (date): Fecha de actualización
+- `deleted_at` (date): Fecha de eliminación lógica
 
 ---
 
-### TOURNAMENTS
+### TOURNAMENT
 Representa torneos en los que se realizan apuestas.
 
 **Atributos:**
-- id (PK)
-- name: Nombre del torneo
-- start_date: Fecha de inicio
-- end_date: Fecha de finalización
-- created_at
+- `id` (PK, uuid): Identificador único
+- `name` (string): Nombre del torneo
+- `token` (string): Token de acceso al torneo
+- `start_date` (date): Fecha de inicio
+- `end_date` (date): Fecha de finalización
+- `created_at` (date): Fecha de creación
 
 ---
 
-### PAYMENTS
-Controla si un usuario ha pagado para participar en un torneo.
+### TEAM
+Equipos de fútbol asociados a un torneo.
 
 **Atributos:**
-- id (PK)
-- user_id (FK → USERS)
-- tournament_id (FK → TOURNAMENTS)
-- state_pay: Estado del pago (failed | pending | paid)
-- created_at
-- updated_at
+- `id` (PK, uuid): Identificador único
+- `tournament_id` (FK → TOURNAMENT): Torneo al que pertenece el equipo
+- `name` (string): Nombre del equipo
+- `shield_url` (string): URL del escudo del equipo
+- `created_at` (date): Fecha de creación
+- `updated_at` (date): Fecha de actualización
+- `deleted_at` (date): Fecha de eliminación lógica
 
 ---
 
-### TEAMS
-Equipos de fútbol.
+### TOURNAMENT_INSTANCE
+Representa una polla o pool dentro de un torneo, creada por un usuario.
 
 **Atributos:**
-- id (PK)
-- name: Nombre del equipo
-- code: Código único
-- shield_url: Escudo del equipo
-- created_at
-- updated_at
-- deleted_at
+- `id` (PK, uuid): Identificador único
+- `tournament_id` (FK → TOURNAMENT): Torneo al que pertenece
+- `owner_user_id` (FK → USER): Usuario creador de la instancia
+- `name` (string): Nombre de la instancia
+- `state` (TournamentState): Estado de la instancia (`approved` | `pending` | `denied`)
+- `created_at` (date): Fecha de creación
+- `updated_at` (date): Fecha de actualización
+- `deleted_at` (date): Fecha de eliminación lógica
 
 ---
 
-### TOURNAMENT_TEAMS
-Tabla intermedia que relaciona equipos con torneos.
+### USER_ENROLLMENT
+Representa la inscripción de un usuario en una instancia (polla), incluyendo su ranking y puntaje.
 
 **Atributos:**
-- id (PK)
-- team_id (FK → TEAMS)
-- tournament_id (FK → TOURNAMENTS)
+- `id` (PK, uuid): Identificador único
+- `player_id` (FK → USER): Usuario inscrito
+- `tournament_instance_id` (FK → TOURNAMENT_INSTANCE): Instancia a la que pertenece
+- `last_position` (number): Posición anterior en el ranking
+- `current_position` (number): Posición actual en el ranking
+- `current_score` (number): Puntaje acumulado actual
+- `exact_hits` (number): Total de predicciones con marcador exacto
+- `streak` (number): Racha activa del usuario
+- `created_at` (date): Fecha de creación
+- `updated_at` (date): Fecha de actualización
+- `joined_at` (date): Fecha en que se unió
 
 ---
 
-### GROUPS
-Define los grupos dentro de un torneo (fase de grupos).
+### MATCH
+Partidos disputados entre equipos dentro de un torneo.
 
 **Atributos:**
-- id (PK)
-- tournament_id (FK → TOURNAMENTS)
-- group_name: Nombre del grupo (A, B, C...)
-- created_at
-- updated_at
-- deleted_at
+- `id` (PK, uuid): Identificador único
+- `tournament_id` (FK → TOURNAMENT): Torneo al que pertenece
+- `home_team_id` (FK → TEAM): Equipo local
+- `away_team_id` (FK → TEAM): Equipo visitante
+- `kick_off` (date): Fecha y hora del partido
+- `home_score` (number): Goles del equipo local
+- `away_score` (number): Goles del equipo visitante
+- `status` (MatchStatus): Estado del partido (`scheduled` | `in_progress` | `finished` | `draft`)
+- `stage` (MatchStage): Etapa del partido (`group` | `finals`)
+- `created_at` (date): Fecha de creación
+- `updated_at` (date): Fecha de actualización
 
 ---
 
-### GROUP_TEAMS
-Relaciona equipos con grupos.
+### PREDICTION
+Predicciones realizadas por un usuario inscrito sobre el resultado de un partido.
 
 **Atributos:**
-- id (PK)
-- team_id (FK → TEAMS)
-- group_id (FK → GROUPS)
-
----
-
-### MATCHES
-Partidos entre equipos.
-
-**Atributos:**
-- id (PK)
-- home_team_id (FK → TEAMS)
-- away_team_id (FK → TEAMS)
-- tournament_id (FK → TOURNAMENTS)
-- kick_off: Fecha y hora del partido
-- home_goals: Goles equipo local
-- away_goals: Goles equipo visitante
-- status: Estado (scheduled | in_progress | finished)
-- stage: Etapa (group | finals)
-- venue: Estadio del partido
-- created_at
-- updated_at
-
----
-
-### RULES
-Reglas configurables para las instancias.
-
-**Atributos:**
-- id (PK)
-- name: Nombre de la regla
-- description: Descripción de la regla
-- created_at
-
----
-
-### INSTANCES
-Representa una polla o pool dentro de un torneo. Un usuario la crea y un validador la aprueba.
-
-**Atributos:**
-- id (PK)
-- tournament_id (FK → TOURNAMENTS)
-- owner_user_id (FK → USERS): Creador de la instancia
-- validator_user_id (FK → USERS): Validador de la instancia
-- state: Estado de la instancia (approved | pending | denied)
-- name: Nombre de la polla
-- price: Precio de entrada
-- created_at
-- updated_at
-- deleted_at
-
----
-
-### INSTANCE_USERS
-Jugadores que participan en una instancia.
-
-**Atributos:**
-- id (PK)
-- player_id (FK → USERS)
-- instance_id (FK → INSTANCES)
-- joined_at: Fecha en que se unió
-- created_at
-
----
-
-### INSTANCE_RULES
-Tabla intermedia que asigna reglas a una instancia.
-
-**Atributos:**
-- id (PK)
-- instance_id (FK → INSTANCES)
-- rule_id (FK → RULES)
-- created_at
-
----
-
-### PREDICTIONS
-Predicciones realizadas por los jugadores de una instancia.
-
-**Atributos:**
-- id (PK)
-- instance_player_id (FK → INSTANCE_USERS)
-- match_id (FK → MATCHES)
-- pred_home_goals: Predicción goles local
-- pred_away_goals: Predicción goles visitante
-- earned_points: Puntos obtenidos
-- created_at
-- updated_at
-- deleted_at
-
----
-
-### LEADERBOARD
-Ranking de usuarios por torneo.
-
-**Atributos:**
-- id (PK)
-- user_id (FK → USERS)
-- tournament_id (FK → TOURNAMENTS)
-- position: Posición en el ranking
-- total_points: Puntos acumulados
-- exact_hits: Aciertos exactos
-- outcome_hits: Aciertos de resultado
-- created_at
-- updated_at
+- `id` (PK, uuid): Identificador único
+- `user_enrollment_id` (FK → USER_ENROLLMENT): Inscripción del usuario que predice
+- `match_id` (FK → MATCH): Partido al que corresponde la predicción
+- `pred_home_goals` (number): Predicción de goles del equipo local
+- `pred_away_goals` (number): Predicción de goles del equipo visitante
+- `earned_points` (number): Puntos obtenidos por la predicción
+- `has_exact_result` (bool): Indica si el usuario acertó el marcador exacto
+- `created_at` (date): Fecha de creación
+- `updated_at` (date): Fecha de actualización
+- `deleted_at` (date): Fecha de eliminación lógica
 
 ---
 
 ## 3. Relaciones y Cardinalidades
 
-### TOURNAMENTS → INSTANCES
+### TOURNAMENT → TEAM
 - Tipo: 1:N
-- Un torneo puede tener muchas instancias (pollas)
-- Cada instancia pertenece a un torneo
+- Un torneo tiene muchos equipos directamente asociados
+- Cada equipo pertenece a un único torneo
 
 ---
 
-### USERS → INSTANCES (owner)
+### TOURNAMENT → TOURNAMENT_INSTANCE
+- Tipo: 1:N
+- Un torneo puede tener muchas instancias (pollas)
+- Cada instancia pertenece a un único torneo
+
+---
+
+### USER → TOURNAMENT_INSTANCE (owner)
 - Tipo: 1:N
 - Un usuario puede ser dueño de muchas instancias
 
 ---
 
-### USERS → INSTANCES (validator)
+### TOURNAMENT_INSTANCE → USER_ENROLLMENT
 - Tipo: 1:N
-- Un usuario puede validar muchas instancias
+- Una instancia tiene muchos usuarios inscritos
+- Cada inscripción pertenece a una única instancia
 
 ---
 
-### INSTANCES → INSTANCE_USERS
+### USER → USER_ENROLLMENT
 - Tipo: 1:N
-- Una instancia tiene muchos jugadores
+- Un usuario puede estar inscrito en muchas instancias
 
 ---
 
-### USERS → INSTANCE_USERS
-- Tipo: 1:N
-- Un usuario puede participar en muchas instancias
-
----
-
-### INSTANCE_USERS → PREDICTIONS
-- Tipo: 1:N
-- Un jugador de instancia puede hacer muchas predicciones
-- Cada predicción pertenece a un jugador de instancia
-
----
-
-### MATCHES → PREDICTIONS
-- Tipo: 1:N
-- Un partido puede tener muchas predicciones
-- Cada predicción pertenece a un partido
-
----
-
-### INSTANCES → INSTANCE_RULES
-- Tipo: 1:N
-- Una instancia puede tener muchas reglas asignadas
-
----
-
-### RULES → INSTANCE_RULES
-- Tipo: 1:N
-- Una regla puede estar asignada a muchas instancias
-
----
-
-### USERS → PAYMENTS
-- Tipo: 1:N
-- Un usuario puede pagar múltiples torneos
-
----
-
-### TOURNAMENTS → PAYMENTS
-- Tipo: 1:N
-- Un torneo puede tener múltiples pagos de usuarios
-
----
-
-### TOURNAMENTS → MATCHES
+### TOURNAMENT → MATCH
 - Tipo: 1:N
 - Un torneo contiene múltiples partidos
+- Cada partido pertenece a un único torneo
 
 ---
 
-### TEAMS → MATCHES
+### TEAM → MATCH
 - Tipo: 1:N (doble relación)
 - Un equipo puede ser local o visitante en muchos partidos
+- Cada partido tiene un equipo local (`home_team_id`) y uno visitante (`away_team_id`)
 
 ---
 
-### TOURNAMENTS ↔ TEAMS (via TOURNAMENT_TEAMS)
-- Tipo: N:M
-- Un torneo tiene muchos equipos
-- Un equipo puede participar en muchos torneos
-
----
-
-### GROUPS → GROUP_TEAMS
+### MATCH → PREDICTION
 - Tipo: 1:N
-- Un grupo contiene muchos equipos
+- Un partido puede tener muchas predicciones asociadas
+- Cada predicción corresponde a un único partido
 
 ---
 
-### TEAMS → GROUP_TEAMS
+### USER_ENROLLMENT → PREDICTION
 - Tipo: 1:N
-- Un equipo puede pertenecer a un grupo
-
----
-
-### TOURNAMENTS → GROUPS
-- Tipo: 1:N
-- Un torneo tiene múltiples grupos
-
----
-
-### USERS → LEADERBOARD
-- Tipo: 1:N
-- Un usuario tiene un registro por torneo
-
----
-
-### TOURNAMENTS → LEADERBOARD
-- Tipo: 1:N
-- Un torneo tiene múltiples registros de ranking
+- Un usuario inscrito puede realizar muchas predicciones
+- Cada predicción pertenece a una única inscripción
 
 ---
 
 ## 4. Reglas de Negocio Implícitas
 
-- Un jugador de instancia solo puede predecir una vez por partido (constraint UNIQUE en instance_player_id + match_id)
-- Un usuario debe pertenecer a una instancia (INSTANCE_USERS) para poder hacer predicciones
-- Una instancia debe ser aprobada (state = approved) para estar activa
-- Los puntos en LEADERBOARD se derivan de PREDICTIONS
-- Los equipos deben pertenecer a un torneo para participar en sus partidos
-- Los grupos están contenidos dentro de un torneo
-- Cada instancia puede tener sus propias reglas asignadas via INSTANCE_RULES
+- Un usuario debe estar inscrito en una instancia (`USER_ENROLLMENT`) para poder hacer predicciones
+- Un usuario inscrito solo puede predecir una vez por partido (constraint `UNIQUE` en `user_enrollment_id` + `match_id`)
+- Una instancia debe estar aprobada (`state = approved`) para estar activa
+- `current_score`, `current_position` y `streak` en `USER_ENROLLMENT` se derivan de los resultados en `PREDICTION`
+- Los equipos pertenecen directamente a un torneo; no existe una tabla intermedia de equipos globales
+- Una instancia solo puede tener un dueño (`owner_id`), sin rol de validador separado
 
 ---
 
 ## 5. Consideraciones de Diseño
 
-- LEADERBOARD es una tabla derivada para optimizar consultas de ranking
-- TOURNAMENT_TEAMS y GROUP_TEAMS resuelven relaciones N:M
-- INSTANCE_RULES resuelve la relación N:M entre INSTANCES y RULES
-- INSTANCE_USERS actúa como pivote entre USERS e INSTANCES, y es la entidad que genera predicciones
+- `USER_ENROLLMENT` reemplaza y unifica las tablas `INSTANCE_USERS` y `LEADERBOARD` del modelo anterior, centralizando tanto la participación como el ranking del usuario en una única entidad
+- Los equipos (`TEAM`) están directamente vinculados a un torneo mediante `tournament_id`, eliminando la tabla intermedia `TOURNAMENT_TEAMS`
+- Se eliminaron las entidades `GROUPS`, `GROUP_TEAMS`, `INSTANCE_RULES`, `RULES` y `PAYMENTS` respecto al modelo anterior
+- `TOURNAMENT_INSTANCE` ya no requiere `validator_user_id` ni `price`, simplificando el flujo de creación
+- El campo `token` en `TOURNAMENT` permite controlar el acceso o invitación a un torneo
+- `has_exact_result` en `PREDICTION` optimiza las consultas de estadísticas sin necesidad de recalcular
 - El modelo permite escalar a múltiples torneos e instancias simultáneamente
-- Los roles de usuario (general, global, instance) definen niveles de acceso
-- La integridad depende parcialmente de validaciones en backend
