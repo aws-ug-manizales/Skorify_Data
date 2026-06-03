@@ -31,6 +31,9 @@ const parseMatch = (matchData: any): FootballDataMatch => {
     competition: {
       id: matchData.competition?.id,
       name: matchData.competition?.name,
+      code: matchData.competition?.code,
+      startDate: matchData.season?.startDate,
+      endDate: matchData.season?.endDate,
     },
     matchday: matchData.matchday,
     homeTeam: matchData.homeTeam,
