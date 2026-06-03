@@ -4,7 +4,7 @@ export type FootballDataTeam = {
     crest?: string;
 }
 
-export type FootballDataCompetition {
+export type FootballDataCompetition = {
     id: number;
     name: string;
     code: string;
