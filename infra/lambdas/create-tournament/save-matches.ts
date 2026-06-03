@@ -127,9 +127,11 @@ const mapMatchData = (data: any): any => {
 const getStage = (stage: string): 'group' | 'finals' => {
     const stageMap: Record<string, 'group' | 'finals'> = {
         'GROUP_STAGE': 'group',
-        'ROUND_OF_16': 'finals',
+        'LAST_16': 'finals',
+        'LAST_32': 'finals',
         'QUARTER_FINALS': 'finals',
         'SEMI_FINALS': 'finals',
+        'THIRD_PLACE': 'finals',
         'FINAL': 'finals',
     };
     const stageMapped = stageMap[stage];
