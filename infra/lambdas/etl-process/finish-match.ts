@@ -1,4 +1,4 @@
-import type { SQSEvent, SQSRecord } from "aws-lambda";
+import type { SQSEvent, SQSRecord, SQSBatchResponse } from "aws-lambda";
 import { initBackedClient } from "../../utils/backend-client.js";
 import { createEventLogger } from "../../utils/logger.js";
 import { RetryExhaustedError } from "../../utils/retry.js";
@@ -27,14 +27,17 @@ function parseRecord(record: SQSRecord): MatchFinishedDetail | null {
   }
 }
 
-export const handler = async (event: SQSEvent): Promise<void> => {
+export const handler = async (event: SQSEvent): Promise<SQSBatchResponse> => {
   logger.started("batch", `Received ${event.Records.length} record(s)`);
+
+  const batchItemFailures: { itemIdentifier: string }[] = [];
 
   for (const record of event.Records) {
     const detail = parseRecord(record);
 
     if (!detail) {
       console.error("Failed to parse SQS record:", record.messageId);
+      batchItemFailures.push({ itemIdentifier: record.messageId });
       continue;
     }
 
@@ -63,7 +66,8 @@ export const handler = async (event: SQSEvent): Promise<void> => {
           { tournament_id: detail.tournament_id }
         );
       }
-      throw error;
+      batchItemFailures.push({ itemIdentifier: record.messageId });
+      continue;
     }
 
     try {
@@ -83,7 +87,9 @@ export const handler = async (event: SQSEvent): Promise<void> => {
         error,
         { tournament_id: detail.tournament_id }
       );
-      throw error;
+      batchItemFailures.push({ itemIdentifier: record.messageId });
     }
   }
+
+  return { batchItemFailures };
 };

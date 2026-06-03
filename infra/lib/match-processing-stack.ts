@@ -97,7 +97,7 @@ export class MatchProcessingStack extends cdk.Stack {
     workerLambda.addEnvironment("TOURNAMENT_MAPPING_TABLE", tournamentMappingTable.tableName);
     workerLambda.addEnvironment("FOOTBALL_DATA_API_TOKEN", process.env.FOOTBALL_DATA_API_TOKEN || '');
     this.bus.grantPutEventsTo(workerLambda);
-    matchMappingTable.grantReadData(workerLambda);
+    matchMappingTable.grantReadWriteData(workerLambda);
     tournamentMappingTable.grantReadData(workerLambda);
 
     const finishMatchLambda = createLambda(
@@ -106,8 +106,13 @@ export class MatchProcessingStack extends cdk.Stack {
       this
     );
     finishMatchLambda.addEnvironment(ENV.BACKEND_URL, backendUrl);
+    finishMatchLambda.addEnvironment("MATCH_MAPPING_TABLE", matchMappingTable.tableName);
+    matchMappingTable.grantWriteData(finishMatchLambda);
     finishMatchLambda.addEventSource(
-      new sources.SqsEventSource(finishMatchQueue, { batchSize: 1 })
+      new sources.SqsEventSource(finishMatchQueue, {
+        batchSize: 5,
+        reportBatchItemFailures: true,
+      })
     );
 
     const notifyUsersLambda = createLambda(
