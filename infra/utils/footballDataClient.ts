@@ -10,7 +10,12 @@ export const getMatchesByCompetition = async (competitionId: string): Promise<{ 
   const matches = matchesResponse.matches || [];
   console.log(`Received matches data: ${JSON.stringify(matches)}`);
   const matchesParsed = parseMatches(matches);
-  return { matches: matchesParsed, competition: matchesResponse.competition || {} };
+  const competition: FootballDataCompetition = {
+    ...matchesResponse.competition,
+    startDate: matches[0]?.season?.startDate,
+    endDate: matches[0]?.season?.endDate,
+  };
+  return { matches: matchesParsed, competition };
 };
 
 const parseMatches = (matchesData: any[]): FootballDataMatch[] => {

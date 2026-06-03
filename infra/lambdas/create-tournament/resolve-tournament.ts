@@ -7,15 +7,7 @@ import {
 } from '@aws-sdk/lib-dynamodb';
 import { buildDbClient } from '../../utils/dbClient';
 
-interface FootballDataCompetition {
-    id: number;
-    name: string;
-    code: string;
-    currentSeason?: {
-        startDate?: string;
-        endDate?: string;
-    };
-}
+import type { FootballDataCompetition } from '../../../types/football-data.types';
 
 interface ParsedMatch {
     id: number;
@@ -64,16 +56,16 @@ export const handler = async (
         tournament_id = Item.postgresId as string;
     } else {
         const db = await getDbClient();
-        if (!competition.currentSeason?.startDate || !competition.currentSeason?.endDate) {
+        if (!competition.startDate || !competition.endDate) {
             throw new Error(
                 `Competition ${competition.name} is missing season dates`,
             );
         }
-        const created = await db.tournaments.create({
+        const created = await db.tournaments.save({
             name: competition.name,
             token: competition.code,
-            start_date: new Date(competition.currentSeason?.startDate),
-            end_date: new Date(competition.currentSeason?.endDate),
+            start_date: new Date(competition.startDate),
+            end_date: new Date(competition.endDate),
         });
 
         await ddb.send(

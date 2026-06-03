@@ -55,7 +55,7 @@ async function resolveTeam(fdTeam: FootballDataTeam, tournamentId: string): Prom
     }
 
     const db = await getDbClient();
-    const created = await db.teams.create({
+    const created = await db.teams.save({
         name: fdTeam.name,
         tournament_id: tournamentId,
         shield_url: fdTeam.crest ?? null,
