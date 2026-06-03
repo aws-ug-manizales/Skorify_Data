@@ -29,6 +29,7 @@ export interface MatchFinishedDetail {
   final_away_goals: number;
   stage: string;
   timestamp: string;
+  fdMatchId: number;
 }
 
 export interface CalculateInstanceRankingDetail {

@@ -38,6 +38,19 @@ export const handler = async (): Promise<void> => {
         console.log("Partidos mapeados para eventos:", mappedMatches);
 
         await sendEvents(mappedMatches);
+
+        const markResults = await Promise.allSettled(
+            mappedMatches.map(match =>
+                matchDdb.put({ fdataId: match.fdMatchId.toString(), postgresId: match.match_id, status: "Processing" })
+            )
+        );
+
+        markResults.forEach((result, i) => {
+            if (result.status === "rejected") {
+                console.warn(`Failed to mark match ${mappedMatches[i].fdMatchId} as Processing:`, result.reason);
+            }
+        });
+
         console.log(`Evento publicado para los partidos ${matchIds.join(", ")}`);
     } catch (error) {
         console.error("Error en el Worker de ingesta:", error);
@@ -53,7 +66,8 @@ const mapMatchToEventDetail = (match: any, matchMap: ExternalMap, tournamentMap:
         tournament_id: tournamentMapId ?? null,
         final_home_goals: match.score?.fullTime?.home ?? 0,
         final_away_goals: match.score?.fullTime?.away ?? 0,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
+        fdMatchId: match.id,
     };
 };
 
@@ -75,7 +89,7 @@ const syncExternalIdsWithDB = async (matchIds: string[], tournamentIds: string[]
     return {
         matchMap: matchIdMapped.reduce(
             (acc, item) => {
-                if (item.status !== "Finished") {
+                if (item.status !== "Finished" && item.status !== "Processing") {
                     acc[item.fdataId] = item.postgresId;
                 }
                 return acc;

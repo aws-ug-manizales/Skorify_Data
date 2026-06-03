@@ -3,9 +3,11 @@ import { initBackedClient } from "../../utils/backend-client.js";
 import { createEventLogger } from "../../utils/logger.js";
 import { RetryExhaustedError } from "../../utils/retry.js";
 import type { MatchFinishedDetail } from "../../utils/types.js";
+import { DDBClient } from "../../utils/ddbClient.js";
 
 const logger = createEventLogger("FinishMatchLambda");
 const backend = initBackedClient(logger);
+const ddb = new DDBClient("MATCH_MAPPING_TABLE");
 
 function parseRecord(record: SQSRecord): MatchFinishedDetail | null {
   try {
@@ -41,12 +43,10 @@ export const handler = async (event: SQSEvent): Promise<void> => {
       stage: detail.stage,
     });
 
+    const { fdMatchId, ...backendDetail } = detail;
+
     try {
-      await backend.processMatch(detail.match_id, detail);
-      logger.success(detail.match_id, "Match processed by backend", {
-        tournament_id: detail.tournament_id,
-        stage: detail.stage,
-      });
+      await backend.processMatch(detail.match_id, backendDetail);
     } catch (error) {
       if (error instanceof RetryExhaustedError) {
         logger.failed(
@@ -58,11 +58,31 @@ export const handler = async (event: SQSEvent): Promise<void> => {
       } else {
         logger.failed(
           detail.match_id,
-          "Failed to process match",
+          "Failed to process match — match will NOT be closed",
           error,
           { tournament_id: detail.tournament_id }
         );
       }
+      throw error;
+    }
+
+    try {
+      await ddb.put({
+        fdataId: fdMatchId.toString(),
+        postgresId: detail.match_id,
+        status: "Finished",
+      });
+      logger.success(detail.match_id, "Match processed by backend", {
+        tournament_id: detail.tournament_id,
+        stage: detail.stage,
+      });
+    } catch (error) {
+      logger.failed(
+        detail.match_id,
+        "Match processed by backend but failed to update DDB status",
+        error,
+        { tournament_id: detail.tournament_id }
+      );
       throw error;
     }
   }
