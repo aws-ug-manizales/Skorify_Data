@@ -4,18 +4,13 @@ import { DDBClient } from '../../utils/ddbClient';
 
 import { DetailTypes, EventSources } from "../../lib/constants.js";
 
-type MapItem = {
-    fdataId: string;
-    postgresId: string;
-};
-
-type ExternalMap = Record<string, string>;
+import type { MapItem, ExternalMap } from '../../utils/types';
 
 const eventBridge = new EventBridgeClient();
 const EVENT_BUS_NAME = process.env.EVENT_BUS_NAME ?? "SkorifyDataBus";
 
-const matchDdb = new DDBClient(process.env.MATCH_MAPPING_TABLE);
-const tournamentDdb = new DDBClient(process.env.TOURNAMENT_MAPPING_TABLE);
+const matchDdb = new DDBClient("MATCH_MAPPING_TABLE");
+const tournamentDdb = new DDBClient("TOURNAMENT_MAPPING_TABLE");
 
 export const handler = async (): Promise<void> => {
     try {

@@ -1,16 +1,11 @@
-import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
-import {
-    DynamoDBDocumentClient,
-    GetCommand,
-    PutCommand,
-} from '@aws-sdk/lib-dynamodb';
+import { DDBClient } from '../../utils/ddbClient';
 import { initBackedClient } from '../../utils/backend-client';
 
-import type { FootballDataCompetition, FootballDataTeam, HandlerInput, ParsedMatch } from '../../utils/types';
+import type { HandlerInput, ParsedMatch } from '../../utils/types';
 import { createEventLogger } from '../../utils/logger';
 
 const logger = createEventLogger("ResolveTournamentLambda");
-const ddb = DynamoDBDocumentClient.from(new DynamoDBClient({}));
+const ddb = new DDBClient("TOURNAMENT_MAPPING_TABLE");
 const backend = initBackedClient(logger);
 
 export const handler = async (
@@ -20,14 +15,7 @@ export const handler = async (
     const fdataId = String(competition.id);
     logger.started(fdataId, 'Resolving tournament for competition', { competition, matches });
 
-    const table = process.env.TOURNAMENT_MAPPING_TABLE;
-    if (!table) {
-        throw new Error('TOURNAMENT_MAPPING_TABLE env var not set');
-    }
-
-    const { Item } = await ddb.send(
-        new GetCommand({ TableName: table, Key: { fdataId } }),
-    );
+    const { Item } = await ddb.get({ fdataId });
 
     let tournament_id: string;
 
@@ -42,12 +30,7 @@ export const handler = async (
             matchType: "SingleMatchPerRound",
         });
 
-        await ddb.send(
-            new PutCommand({
-                TableName: table,
-                Item: { fdataId, postgresId: created.id },
-            }),
-        );
+        await ddb.put({ fdataId, postgresId: created.id });
 
         logger.info(fdataId, `Tournament ${fdataId} created in postgres -> ${created.id}`, { competition });
         tournament_id = created.id!;

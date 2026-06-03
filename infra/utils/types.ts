@@ -70,6 +70,14 @@ export interface HandlerInput {
     competition: FootballDataCompetition;
 }
 
+
+export type MapItem = {
+    fdataId: string;
+    postgresId: string;
+};
+
+export type ExternalMap = Record<string, string>;
+
 // backend client types
 
 export interface BackendMatch {

@@ -1,6 +1,4 @@
-import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
 import {
-    DynamoDBDocumentClient,
     GetCommand,
     PutCommand,
 } from '@aws-sdk/lib-dynamodb';
@@ -8,23 +6,18 @@ import { initBackedClient } from '../../utils/backend-client';
 import { createEventLogger } from '../../utils/logger';
 
 import type { FootballDataTeam, ParsedMatch } from '../../utils/types';
+import { DDBClient } from '../../utils/ddbClient';
 
 const logger = createEventLogger("ResolveTeamsLambda");
 
-const ddb = DynamoDBDocumentClient.from(new DynamoDBClient({}));
+const teamDdb = new DDBClient("TEAM_MAPPING_TABLE");
 const backend = initBackedClient(logger);
 
 async function resolveTeam(fdTeam: FootballDataTeam): Promise<string> {
     const fdataId = String(fdTeam.id);
     logger.info(fdataId, "Resolving team", { team: fdTeam });
-    const table = process.env.TEAM_MAPPING_TABLE;
-    if (!table) {
-        throw new Error('TEAM_MAPPING_TABLE env var not set');
-    }
 
-    const { Item } = await ddb.send(
-        new GetCommand({ TableName: table, Key: { fdataId } }),
-    );
+    const { Item } = await teamDdb.get({ fdataId });
 
     if (Item?.postgresId) {
         logger.info(fdataId, `Team ${fdataId} found in mapping -> ${Item.postgresId}`, { team: fdTeam });
@@ -37,12 +30,7 @@ async function resolveTeam(fdTeam: FootballDataTeam): Promise<string> {
         shieldUrl: fdTeam.crest ?? '',
     });
 
-    await ddb.send(
-        new PutCommand({
-            TableName: table,
-            Item: { fdataId, postgresId: created.id },
-        }),
-    );
+    await teamDdb.put({ fdataId, postgresId: created.id });
 
     logger.info(fdataId, `Team ${fdataId} created in postgres -> ${created.id}`, { team: fdTeam });
     return created.id ?? '';

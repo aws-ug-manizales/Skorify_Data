@@ -12,9 +12,10 @@ export class DDBClient {
   private ddb: DynamoDBDocumentClient;
   private tableName: string;
 
-  constructor(tableName?: string) {
+  constructor(tableNameEnv: string) {
+    const tableName = process.env[tableNameEnv];
     if (!tableName) {
-      throw new Error('TEAM_MAPPING_TABLE env var not set');
+      throw new Error(`${tableNameEnv} env var not set`);
     }
     const client = new DynamoDBClient({});
     this.ddb = DynamoDBDocumentClient.from(client);

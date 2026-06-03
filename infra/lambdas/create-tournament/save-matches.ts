@@ -1,12 +1,11 @@
-import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
-import { DynamoDBDocumentClient, PutCommand } from '@aws-sdk/lib-dynamodb';
 import { initBackedClient } from '../../utils/backend-client';
 import type { BackendMatch } from '../../utils/types';
 import { createEventLogger } from '../../utils/logger';
+import { DDBClient } from '../../utils/ddbClient';
 
 
 const logger = createEventLogger("SaveMatchesLambda");
-const ddb = DynamoDBDocumentClient.from(new DynamoDBClient({}));
+const ddb = new DDBClient("MATCH_MAPPING_TABLE");
 const backend = initBackedClient(logger);
 
 export const handler = async (event: any): Promise<void> => {
@@ -14,23 +13,18 @@ export const handler = async (event: any): Promise<void> => {
     try {
         const matchData = parseEvent(event);
         logger.started(matchData.id, "Received event to save match data", { event });
+        if (matchData.id === undefined || matchData.id === null) {
+            logger.failed("Validation", "Match data must include an 'id' field.", { event });
+            throw new Error("Match data must include an 'id' field.");
+        }
         const matchMapped = mapMatchData(matchData);
         const saved = await backend.createMatch(matchMapped);
         logger.info(matchData.id, 'Match data saved successfully', { event, postgresId: saved.id });
 
-        const table = process.env.MATCH_MAPPING_TABLE;
-        if (table && matchData.id !== undefined && matchData.id !== null) {
-            await ddb.send(
-                new PutCommand({
-                    TableName: table,
-                    Item: {
-                        fdataId: String(matchData.id),
-                        postgresId: saved.id,
-                    },
-                }),
-            );
-            logger.info(matchData.id, `Mapping written: fdataId=${matchData.id} -> postgresId=${saved.id}`, { event });
-        }
+        await ddb.put({
+            fdataId: String(matchData.id),
+            postgresId: saved.id,
+        }),
         logger.success(matchData.id, "Match data processing completed", { event, postgresId: saved.id });
     } catch (error) {
         logger.failed("Error", 'Error saving match data:', { event, error });
