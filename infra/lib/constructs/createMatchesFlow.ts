@@ -167,6 +167,7 @@ export class createMatchesFlow extends Construct {
 
     this.createMatchesSFn = new sfn.StateMachine(this, 'CreateMatchesStateMachine', {
       definition: getMatchesTask.next(resolveTournamentTask).next(matchesMap),
+      stateMachineType: sfn.StateMachineType.EXPRESS,
       timeout: cdk.Duration.minutes(5)
     });
   }
