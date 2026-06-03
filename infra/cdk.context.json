@@ -1,1 +1,50 @@
-{}
+{
+  "env": "pdn",
+  "vpcName": "skorify-pdn-vpc",
+  "backendUrl": "https://api.skorify.cloud-manizales.com",
+  "vpc-provider:account=151646410766:filter.tag:Name=skorify-pdn-vpc:region=us-east-1:returnAsymmetricSubnets=true": {
+    "vpcId": "vpc-08506af24531f2dcb",
+    "vpcCidrBlock": "10.0.0.0/16",
+    "ownerAccountId": "151646410766",
+    "availabilityZones": [],
+    "subnetGroups": [
+      {
+        "name": "Private",
+        "type": "Private",
+        "subnets": [
+          {
+            "subnetId": "subnet-0fb86eedc4fda34e0",
+            "cidr": "10.0.1.0/24",
+            "availabilityZone": "us-east-1a",
+            "routeTableId": "rtb-07f0f03d734cede19"
+          },
+          {
+            "subnetId": "subnet-005725c5264f50f50",
+            "cidr": "10.0.2.0/24",
+            "availabilityZone": "us-east-1b",
+            "routeTableId": "rtb-07f0f03d734cede19"
+          }
+        ]
+      },
+      {
+        "name": "Public",
+        "type": "Public",
+        "subnets": [
+          {
+            "subnetId": "subnet-0e8c94f2c585c8eab",
+            "cidr": "10.0.101.0/24",
+            "availabilityZone": "us-east-1a",
+            "routeTableId": "rtb-04844137d1a9485fb"
+          },
+          {
+            "subnetId": "subnet-0aa47d82c019aef44",
+            "cidr": "10.0.102.0/24",
+            "availabilityZone": "us-east-1b",
+            "routeTableId": "rtb-04844137d1a9485fb"
+          }
+        ]
+      }
+    ]
+  },
+  "ssm:account=151646410766:parameterName=/skorify/pdn/db-secret-arn:region=us-east-1": "arn:aws:secretsmanager:us-east-1:151646410766:secret:skorifyDatabaseSecretEE7B60-z9Frbk0i73Nl-pXLmxc"
+}

@@ -55,7 +55,7 @@ export class createMatchesFlow extends Construct {
       runtime: LAMBDA_DEFAULTS.runtime,
       timeout: LAMBDA_DEFAULTS.timeout,
       vpc: props.vpc,
-      vpcSubnets: { subnetType: ec2.SubnetType.PRIVATE_ISOLATED },
+      vpcSubnets: { subnetType: ec2.SubnetType.PRIVATE_WITH_EGRESS },
       environment: {
         DB_SECRET_ARN: props.dbSecretArn,
         TOURNAMENT_MAPPING_TABLE: this.tournamentMappingTable.tableName,
@@ -76,7 +76,7 @@ export class createMatchesFlow extends Construct {
       runtime: LAMBDA_DEFAULTS.runtime,
       timeout: LAMBDA_DEFAULTS.timeout,
       vpc: props.vpc,
-      vpcSubnets: { subnetType: ec2.SubnetType.PRIVATE_ISOLATED },
+      vpcSubnets: { subnetType: ec2.SubnetType.PRIVATE_WITH_EGRESS },
       environment: {
         DB_SECRET_ARN: props.dbSecretArn,
         TEAM_MAPPING_TABLE: this.teamMappingTable.tableName,
@@ -97,7 +97,7 @@ export class createMatchesFlow extends Construct {
       runtime: LAMBDA_DEFAULTS.runtime,
       timeout: LAMBDA_DEFAULTS.timeout,
       vpc: props.vpc,
-      vpcSubnets: { subnetType: ec2.SubnetType.PRIVATE_ISOLATED },
+      vpcSubnets: { subnetType: ec2.SubnetType.PRIVATE_WITH_EGRESS },
       environment: {
         DB_SECRET_ARN: props.dbSecretArn,
         MATCH_MAPPING_TABLE: this.matchMappingTable.tableName,
