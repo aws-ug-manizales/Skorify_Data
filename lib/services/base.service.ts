@@ -165,6 +165,7 @@ export abstract class BaseDataService<
       await validateOrReject(entityInstance, {
         whitelist: true,
         forbidNonWhitelisted: true,
+        forbidUnknownValues: false,
       });
     } catch (errors) {
       const messages = this.formatErrors(errors as ValidationError[]);

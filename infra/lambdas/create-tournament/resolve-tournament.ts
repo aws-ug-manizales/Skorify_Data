@@ -64,11 +64,16 @@ export const handler = async (
         tournament_id = Item.postgresId as string;
     } else {
         const db = await getDbClient();
+        if (!competition.currentSeason?.startDate || !competition.currentSeason?.endDate) {
+            throw new Error(
+                `Competition ${competition.name} is missing season dates`,
+            );
+        }
         const created = await db.tournaments.create({
             name: competition.name,
             token: competition.code,
-            start_date: competition.currentSeason?.startDate ?? null,
-            end_date: competition.currentSeason?.endDate ?? null,
+            start_date: new Date(competition.currentSeason?.startDate),
+            end_date: new Date(competition.currentSeason?.endDate),
         });
 
         await ddb.send(
