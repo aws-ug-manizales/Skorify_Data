@@ -13,6 +13,7 @@ export type FootballDataMatch = {
     id: number;
     utcDate: string;
     status: string;
+    stage: string;
     matchday: number;
     competition: FootballDataCompetition;
     homeTeam: FootballDataTeam;

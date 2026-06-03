@@ -117,11 +117,27 @@ const mapMatchData = (data: any): any => {
     return {
         kick_off: new Date(data.utcDate),
         status: mapStatus(data.status),
-        stage: data.stage === 'GROUP_STAGE' ? 'group' : 'finals',
+        stage: getStage(data.stage),
         home_team_id: data.home_team_id,
         away_team_id: data.away_team_id,
         tournament_id: data.tournament_id,
     };
+};
+
+const getStage = (stage: string): 'group' | 'finals' => {
+    const stageMap: Record<string, 'group' | 'finals'> = {
+        'GROUP_STAGE': 'group',
+        'ROUND_OF_16': 'finals',
+        'QUARTER_FINALS': 'finals',
+        'SEMI_FINALS': 'finals',
+        'FINAL': 'finals',
+    };
+    const stageMapped = stageMap[stage];
+    if (!stageMapped) {
+        console.warn(`Unknown stage "${stage}", defaulting to "group"`);
+        throw new Error(`Unknown stage "${stage}"`); // Opción: lanzar error para forzar corrección de datos en origen
+    }
+    return stageMapped;
 };
 
 const mapStatus = (status: string): 'scheduled' | 'in_progress' | 'finished' | 'draft' => {
