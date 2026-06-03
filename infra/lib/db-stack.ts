@@ -85,7 +85,9 @@ export class DatabaseStack extends cdk.Stack {
       removalPolicy: cdk.RemovalPolicy.SNAPSHOT, 
     });
 
-    if (envName !== 'pdn') {
+    // Solo dev/no-prod tienen el scheduler que para/arranca la RDS (ahorro);
+    // prod corre 24/7.
+    if (envName !== 'prod') {
       new RdsScheduler(this, 'RdsScheduler', {
         databaseInstance: this.database,
         startSchedule: events.Schedule.cron({ minute: '0', hour: '12', weekDay: 'MON-FRI' }),

@@ -1,0 +1,70 @@
+name: CD DEV (Data CDK)
+
+# Se dispara con push directo o merge de un PR a develop.
+"on":
+  push:
+    branches:
+      - develop
+    paths:
+      # El deploy bundlea las lambdas (que importan la lib raíz) y corre las
+      # migraciones, así que también dispara con cambios en la lib/migrations.
+      - infra/**
+      - lib/**
+      - entities/**
+      - migrations/**
+      - package.json
+      - pnpm-lock.yaml
+      - .github/workflows/cd-dev.yml
+  workflow_dispatch: {}
+
+concurrency:
+  group: cd-dev-data
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  id-token: write   # requerido para asumir el rol de AWS vía OIDC
+
+env:
+  AWS_REGION: us-east-1
+
+jobs:
+  deploy:
+    name: Deploy data infra (dev)
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/develop'
+    # NO declarar `environment:` aquí: el rol skorify-data-deploy confía en el
+    # sub repo:aws-ug-manizales/Skorify_Data:ref:refs/heads/develop.
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup Node 22
+        uses: actions/setup-node@v6
+        with:
+          node-version: 22
+
+      - name: Install pnpm
+        run: npm install -g pnpm@10.33.0
+
+      # skorifydata (lib del root) es link local de infra → construir primero.
+      - name: Build root lib (skorifydata)
+        run: |
+          pnpm install --frozen-lockfile
+          pnpm run build
+
+      - name: Install infra deps
+        working-directory: infra
+        run: pnpm install --frozen-lockfile
+
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v6
+        with:
+          # Rol definido en Skorify_DevOps (lib/config/iam-roles-config.ts):
+          #   arn:aws:iam::968306633562:role/skorify-data-deploy
+          role-to-assume: ${{ secrets.AWS_DATA_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: CDK deploy (env=dev)
+        working-directory: infra
+        run: pnpm exec cdk deploy --all --context env=dev --require-approval never

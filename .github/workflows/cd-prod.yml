@@ -1,0 +1,70 @@
+name: CD PROD (Data CDK)
+
+# Se dispara con push directo o merge de un PR a main.
+"on":
+  push:
+    branches:
+      - main
+    paths:
+      # El deploy bundlea las lambdas (que importan la lib raíz) y corre las
+      # migraciones, así que también dispara con cambios en la lib/migrations.
+      - infra/**
+      - lib/**
+      - entities/**
+      - migrations/**
+      - package.json
+      - pnpm-lock.yaml
+      - .github/workflows/cd-prod.yml
+  workflow_dispatch: {}
+
+concurrency:
+  group: cd-prod-data
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  id-token: write   # requerido para asumir el rol de AWS vía OIDC
+
+env:
+  AWS_REGION: us-east-1
+
+jobs:
+  deploy:
+    name: Deploy data infra (prod)
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    # NO declarar `environment:` aquí: el rol skorify-data-deploy (cuenta prod)
+    # confía en el sub repo:aws-ug-manizales/Skorify_Data:ref:refs/heads/main.
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup Node 22
+        uses: actions/setup-node@v6
+        with:
+          node-version: 22
+
+      - name: Install pnpm
+        run: npm install -g pnpm@10.33.0
+
+      # skorifydata (lib del root) es link local de infra → construir primero.
+      - name: Build root lib (skorifydata)
+        run: |
+          pnpm install --frozen-lockfile
+          pnpm run build
+
+      - name: Install infra deps
+        working-directory: infra
+        run: pnpm install --frozen-lockfile
+
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v6
+        with:
+          # Rol skorify-data-deploy en la cuenta de PROD.
+          # Guardar su ARN en el secret AWS_DATA_DEPLOY_ROLE_ARN_PROD del repo.
+          role-to-assume: ${{ secrets.AWS_DATA_DEPLOY_ROLE_ARN_PROD }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: CDK deploy (env=prod)
+        working-directory: infra
+        run: pnpm exec cdk deploy --all --context env=prod --require-approval never

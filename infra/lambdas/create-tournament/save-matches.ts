@@ -107,7 +107,7 @@ const parseEvent = (event: any): any => {
             return JSON.parse(event);
         } catch (error) {
             console.error('Error parsing event string:', error);
-            throw new Error('Invalid event format');
+            throw new Error('Invalid event format', { cause: error });
         }
     }
     return event;
