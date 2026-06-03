@@ -169,7 +169,7 @@ export abstract class BaseDataService<
       });
     } catch (errors) {
       const messages = this.formatErrors(errors as ValidationError[]);
-      throw new Error(`Data Validation Failed: ${messages.join(", ")}`);
+      throw new Error(`Data Validation Failed: ${messages.join(", ")}`, { cause: errors });
     }
   }
 

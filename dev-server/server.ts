@@ -1,6 +1,7 @@
 import express from "express";
 import type { Request, Response } from "express";
 import { DBClient } from "skorifydata";
+import * as skorifydata from "skorifydata";
 
 const app = express();
 app.use(express.json());
@@ -19,7 +20,7 @@ app.get("/health", (_req: Request, res: Response) => {
 });
 
 app.get("/exports", (_req: Request, res: Response) => {
-  const mod = require("skorifydata") as Record<string, unknown>;
+  const mod = skorifydata as unknown as Record<string, unknown>;
   const keys = Object.keys(mod).sort();
   res.json({
     ok: true,

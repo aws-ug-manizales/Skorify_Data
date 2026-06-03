@@ -139,3 +139,6 @@ public
 Thumbs.db
 
 docker-compose.override.yml
+# Artefactos compilados de types/ (el source es types/*.ts)
+types/*.js
+types/*.d.ts
