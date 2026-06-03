@@ -26,6 +26,8 @@ import { SharedResources } from "./constructs/shared-resources";
 
 export interface MatchProcessingStackProps extends cdk.StackProps {
   envName: string;
+  vpcName: string;
+  backendUrl: string;
 }
 
 export class MatchProcessingStack extends cdk.Stack {
@@ -34,14 +36,7 @@ export class MatchProcessingStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props: MatchProcessingStackProps) {
     super(scope, id, props);
 
-    const { envName } = props;
-
-    // const vpcName = ssm.StringParameter.valueFromLookup(
-    //   this,
-    //   `/skorify/${envName}/vpc-name`,
-    // );
-
-    const vpcName = "skorify-dev-vpc";
+    const { envName, vpcName, backendUrl } = props;
 
     const dbSecretArn = ssm.StringParameter.valueFromLookup(
       this,
@@ -49,10 +44,6 @@ export class MatchProcessingStack extends cdk.Stack {
     );
 
     const vpc = ec2.Vpc.fromLookup(this, "ImportedVpc", { vpcName });
-    const backendUrl =
-      this.node.tryGetContext("backendUrl") ??
-      process.env.BACKEND_URL ??
-      "";
 
     const sharedResources = new SharedResources(this, "SharedResources", { envName });
 

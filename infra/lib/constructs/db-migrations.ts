@@ -68,6 +68,8 @@ export class DbMigrations extends Construct {
         externalModules: [
           'mysql', 'mysql2', 'sqlite3', 'better-sqlite3', 'tedious', 'oracledb', 'pg-native',
         ],
+        // CI=true tells pnpm to skip the interactive TTY confirmation when purging node_modules
+        environment: { CI: 'true' },
         commandHooks: {
           beforeBundling: () => [],
           beforeInstall: () => [],
