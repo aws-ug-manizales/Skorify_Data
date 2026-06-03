@@ -74,6 +74,7 @@ export interface HandlerInput {
 export type MapItem = {
     fdataId: string;
     postgresId: string;
+    status?: string;
 };
 
 export type ExternalMap = Record<string, string>;

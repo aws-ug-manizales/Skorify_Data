@@ -1,5 +1,5 @@
 import { EventBridgeClient, PutEventsCommand } from "@aws-sdk/client-eventbridge";
-import { getMatchesByCompetition } from '../../utils/footballDataClient';
+import { getFinishedMatchesByCompetition } from '../../utils/footballDataClient';
 import { DDBClient } from '../../utils/ddbClient';
 
 import { DetailTypes, EventSources } from "../../lib/constants.js";
@@ -12,10 +12,12 @@ const EVENT_BUS_NAME = process.env.EVENT_BUS_NAME ?? "SkorifyDataBus";
 const matchDdb = new DDBClient("MATCH_MAPPING_TABLE");
 const tournamentDdb = new DDBClient("TOURNAMENT_MAPPING_TABLE");
 
+const DAYS_AGO_TO_FETCH = 2;
+
 export const handler = async (): Promise<void> => {
     try {
         // Nota: "WC" es un ejemplo, es necesario poner la  ID de la competencia que tengan en la DB
-        const { matches } = await getMatchesByCompetition("WC");
+        const { matches } = await getFinishedMatchesByCompetition("WC", DAYS_AGO_TO_FETCH);
 
         const finishedMatches = matches.filter(m => m.status === 'FINISHED' || m.status === 'FT');
 
@@ -32,7 +34,7 @@ export const handler = async (): Promise<void> => {
 
         const mappedMatches = finishedMatches
             .map(match => mapMatchToEventDetail(match, matchMap, tournamentMap))
-            .filter(match => match.match_id !== null && match.tournament_id !== null);
+            .filter(match => !(match.match_id === null || match.tournament_id === null));
         console.log("Partidos mapeados para eventos:", mappedMatches);
 
         await sendEvents(mappedMatches);
@@ -71,7 +73,14 @@ const syncExternalIdsWithDB = async (matchIds: string[], tournamentIds: string[]
     const matchIdMapped = await matchDdb.getItems(matchIds.map(id => ({ fdataId: id }))) as MapItem[];
     const tournamentIdMapped = await tournamentDdb.getItems(tournamentIds.map(id => ({ fdataId: id }))) as MapItem[];
     return {
-        matchMap: matchIdMapped.reduce((acc, item) => { acc[item.fdataId] = item.postgresId; return acc; }, {} as ExternalMap),
+        matchMap: matchIdMapped.reduce(
+            (acc, item) => {
+                if (item.status !== "Finished") {
+                    acc[item.fdataId] = item.postgresId;
+                }
+                return acc;
+            }, {} as ExternalMap
+        ),
         tournamentMap: tournamentIdMapped.reduce((acc, item) => { acc[item.fdataId] = item.postgresId; return acc; }, {} as ExternalMap),
     }
 };
