@@ -1,10 +1,13 @@
 import { DBClient } from 'skorifydata';
-import {
-    GetSecretValueCommand,
-    SecretsManagerClient,
-} from '@aws-sdk/client-secrets-manager';
+
 import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
 import { DynamoDBDocumentClient, PutCommand } from '@aws-sdk/lib-dynamodb';
+
+import { BuiltEntityDomainEvent, Id } from '@skorify/domain/core';
+import { MatchEntity } from '@skorify/domain/match';
+import { buildDbClient } from '../../utils/dbClient';
+
+
 
 const ddb = DynamoDBDocumentClient.from(new DynamoDBClient({}));
 
@@ -17,45 +20,9 @@ interface RdsSecret {
     engine?: string;
 }
 
-const secretsManager = new SecretsManagerClient({});
-
 // Cacheamos la construcción del DBClient a nivel de módulo para no resolver
 // el secreto en cada invocación; warm starts reutilizan la misma instancia.
 let dbClientPromise: Promise<DBClient> | null = null;
-
-async function buildDbClient(): Promise<DBClient> {
-    const secretArn = process.env.DB_SECRET_ARN;
-
-    if (secretArn) {
-        const { SecretString } = await secretsManager.send(
-            new GetSecretValueCommand({ SecretId: secretArn }),
-        );
-        if (!SecretString) {
-            throw new Error(`Secret ${secretArn} returned empty value`);
-        }
-        const secret: RdsSecret = JSON.parse(SecretString);
-        console.log({ ...secret, password: undefined }, { depth: null });
-        return new DBClient({
-            type: 'postgres',
-            host: secret.host,
-            port: secret.port,
-            database: secret.dbname ?? process.env.DB_NAME ?? 'polla_mundial',
-            username: secret.username,
-            password: secret.password,
-            ssl: { rejectUnauthorized: false },
-        });
-    }
-
-    // Fallback dev local: env vars planas
-    return new DBClient({
-        type: 'postgres',
-        host: process.env.DB_HOST ?? 'localhost',
-        port: Number(process.env.DB_PORT ?? 5432),
-        database: process.env.DB_NAME ?? 'polla_mundial',
-        username: process.env.DB_USER ?? 'postgres',
-        password: process.env.DB_PASSWORD ?? 'password',
-    });
-}
 
 function getDbClient(): Promise<DBClient> {
     if (!dbClientPromise) {
@@ -75,7 +42,23 @@ export const handler = async (event: any): Promise<void> => {
         console.log('DB client connected successfully.');
         const matchData = parseEvent(event);
         const matchMapped = mapMatchData(matchData);
-        const saved = await dbClient.matches.save(matchMapped);
+        const match = MatchEntity.build({
+            id: crypto.randomUUID(),
+            tournamentId: matchMapped.tournament_id,
+            homeTeamId: matchMapped.home_team_id,
+            awayTeamId: matchMapped.away_team_id,
+            kickOff: matchMapped.kick_off,
+            status: matchMapped.status,
+            stage: matchMapped.stage,
+            createdAt: new Date(),
+        });
+
+        if(!match.is(BuiltEntityDomainEvent)) {
+            throw new Error(`Failed to build match entity for match ${matchData.id}`);
+        }
+
+        const db = await getDbClient();
+        const saved = await db.matches.save(match.payload as MatchEntity);
         console.log('Match data saved successfully, postgresId:', saved.id);
 
         const table = process.env.MATCH_MAPPING_TABLE;

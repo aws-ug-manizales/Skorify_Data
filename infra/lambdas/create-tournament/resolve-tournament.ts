@@ -7,6 +7,9 @@ import {
 } from '@aws-sdk/lib-dynamodb';
 import { buildDbClient } from '../../utils/dbClient';
 
+import { BuiltEntityDomainEvent } from '@skorify/domain/core';
+import { TournamentEntity, MatchType } from '@skorify/domain/tournament';
+
 import type { FootballDataCompetition } from '../../../types/football-data.types';
 
 interface ParsedMatch {
@@ -61,12 +64,22 @@ export const handler = async (
                 `Competition ${competition.name} is missing season dates`,
             );
         }
-        const created = await db.tournaments.save({
+
+        const tournament = TournamentEntity.build({
+            id: crypto.randomUUID(),
             name: competition.name,
+            startDate: new Date(competition.startDate),
+            endDate: new Date(competition.endDate),
+            matchType: MatchType.SingleMatchPerRound,
             token: competition.code,
-            start_date: new Date(competition.startDate),
-            end_date: new Date(competition.endDate),
+            createdAt: new Date(),
         });
+
+        if(!tournament.is(BuiltEntityDomainEvent)) {
+            throw new Error(`Failed to build tournament entity for competition ${competition.name}`);
+        }
+
+        const created = await db.tournaments.save(tournament.payload as TournamentEntity);
 
         await ddb.send(
             new PutCommand({

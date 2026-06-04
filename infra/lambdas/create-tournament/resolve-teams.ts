@@ -9,6 +9,9 @@ import {
 
 import { buildDbClient } from '../../utils/dbClient';
 
+import { BuiltEntityDomainEvent, Id } from '@skorify/domain/core';
+import { TeamEntity } from '@skorify/domain/team';
+
 interface FootballDataTeam {
     id: number;
     name: string;
@@ -55,12 +58,19 @@ async function resolveTeam(fdTeam: FootballDataTeam, tournamentId: string): Prom
     }
 
     const db = await getDbClient();
-    const created = await db.teams.save({
+    const team = TeamEntity.build({
+        id: crypto.randomUUID(),
         name: fdTeam.name,
-        tournament_id: tournamentId,
-        shield_url: fdTeam.crest ?? null,
+        tournamentId: tournamentId as Id,
+        shieldUrl: fdTeam.crest,
+        createdAt: new Date(),
     });
 
+    if(!team.is(BuiltEntityDomainEvent)) {
+        throw new Error(`Failed to build team entity for team ${fdTeam.name}`);
+    }
+
+    const created = await db.teams.save(team.payload as TeamEntity);
     await ddb.send(
         new PutCommand({
             TableName: table,
