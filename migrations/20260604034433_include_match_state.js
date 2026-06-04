@@ -15,6 +15,10 @@ exports.up = async function (knex) {
     )
   `);
 
+  // Drop the text default before changing the type — PostgreSQL cannot
+  // cast a string literal default automatically to the new enum type.
+  await knex.raw(`ALTER TABLE matches ALTER COLUMN status DROP DEFAULT`);
+
   // Convert the existing text+CHECK column to the new named enum in-place.
   // USING casts the current text values — no data is lost.
   await knex.raw(`
@@ -22,6 +26,9 @@ exports.up = async function (knex) {
     ALTER COLUMN status TYPE match_status
     USING status::text::match_status
   `);
+
+  // Restore the default, now typed as match_status.
+  await knex.raw(`ALTER TABLE matches ALTER COLUMN status SET DEFAULT 'scheduled'::match_status`);
 };
 
 /**
