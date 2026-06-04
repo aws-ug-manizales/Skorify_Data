@@ -10,8 +10,8 @@ export const EventSources = {
 
 export const DetailTypes = {
   MATCH_FINISHED: "MatchFinished",
-  NOTIFY_USER: "NotifyUser",
-  CALCULATE_INSTANCE_RANKING: "CalculateInstanceRanking",
+  NOTIFY_USER: "NotifyUserDomainEvent",
+  CALCULATE_INSTANCE_RANKING: "ClosedMatchDomainEvent",
 } as const;
 
 export const QUEUE_DEFAULTS = {
