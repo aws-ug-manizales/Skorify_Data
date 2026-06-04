@@ -3,10 +3,25 @@
  * @returns { Promise<void> }
  */
 exports.up = async function (knex) {
-  // ── matches: extend status enum with 'calculated' and 'cancelled' ─────────
-  // PostgreSQL allows adding values to an existing enum without dropping it.
-  await knex.raw(`ALTER TYPE matches_status ADD VALUE IF NOT EXISTS 'calculated'`);
-  await knex.raw(`ALTER TYPE matches_status ADD VALUE IF NOT EXISTS 'cancelled'`);
+  // Create the named enum type with all values (existing + new ones).
+  await knex.raw(`
+    CREATE TYPE match_status AS ENUM (
+      'scheduled',
+      'in_progress',
+      'finished',
+      'draft',
+      'calculated',
+      'cancelled'
+    )
+  `);
+
+  // Convert the existing text+CHECK column to the new named enum in-place.
+  // USING casts the current text values — no data is lost.
+  await knex.raw(`
+    ALTER TABLE matches
+    ALTER COLUMN status TYPE match_status
+    USING status::text::match_status
+  `);
 };
 
 /**
@@ -14,24 +29,28 @@ exports.up = async function (knex) {
  * @returns { Promise<void> }
  */
 exports.down = async function (knex) {
-  // PostgreSQL cannot remove individual enum values — must drop and recreate.
-  // Coerce rows that use the new values to a safe fallback before dropping.
+  // Rows with the new values have no equivalent in the original set — move
+  // them to the closest safe fallback before narrowing the type.
   await knex('matches')
-    .whereIn('status', ['calculated', 'cancelled'])
+    .where('status', 'calculated')
     .update({ status: 'finished' });
 
-  await knex.raw('ALTER TABLE matches DROP COLUMN status');
-  await knex.raw('DROP TYPE IF EXISTS matches_status CASCADE');
-  await knex.raw(`
-    CREATE TYPE matches_status AS ENUM (
-      'scheduled',
-      'in_progress',
-      'finished',
-      'draft'
-    )
-  `);
+  await knex('matches')
+    .where('status', 'cancelled')
+    .update({ status: 'draft' });
+
+  // Convert back to plain text, then restore the original CHECK constraint.
   await knex.raw(`
     ALTER TABLE matches
-    ADD COLUMN status matches_status NOT NULL DEFAULT 'scheduled'
+    ALTER COLUMN status TYPE text
+    USING status::text
+  `);
+
+  await knex.raw(`DROP TYPE IF EXISTS match_status CASCADE`);
+
+  await knex.raw(`
+    ALTER TABLE matches
+    ADD CONSTRAINT matches_status_check
+    CHECK (status IN ('scheduled', 'in_progress', 'finished', 'draft'))
   `);
 };
