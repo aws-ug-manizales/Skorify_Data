@@ -1,0 +1,47 @@
+name: Build Data
+
+"on":
+  push:
+    branches:
+      - feature/**
+      - develop
+  pull_request:
+    branches:
+      - develop
+      - main
+  workflow_dispatch:
+
+jobs:
+  lint:
+    uses: aws-ug-manizales/Skorify_DevOps/.github/workflows/shared--lint-data.yml@feature/ci-pr-validation-workflows
+
+  sca:
+    uses: aws-ug-manizales/Skorify_DevOps/.github/workflows/shared--sca-generic.yml@feature/ci-pr-validation-workflows
+
+  build:
+    name: Build infra (tsc)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup Node 22
+        uses: actions/setup-node@v6
+        with:
+          node-version: 22
+
+      - name: Install pnpm
+        run: npm install -g pnpm@10.33.0
+
+      # skorifydata (la lib del root) es link local de infra → hay que
+      # construirla primero para que infra resuelva sus tipos.
+      - name: Build root lib (skorifydata)
+        run: |
+          pnpm install --frozen-lockfile
+          pnpm run build
+
+      - name: Build infra (tsc)
+        working-directory: infra
+        run: |
+          pnpm install --frozen-lockfile
+          pnpm run build

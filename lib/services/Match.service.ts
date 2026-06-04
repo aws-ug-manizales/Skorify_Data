@@ -1,19 +1,11 @@
 import { Repository } from "typeorm";
-import { Match as MatchEntity } from "../../entities/Match";
+import { Match } from "../../entities/Match";
 import { BaseDataService } from "./base.service";
+import { MatchEntity } from "@skorify/domain/match";
+import { MatchMapper } from "../mappers/match.mapper";
 
-export class MatchService extends BaseDataService<MatchEntity> {
-    constructor(repository: Repository<MatchEntity>) {
-        super(MatchEntity, repository);
-    }
-
-    async findAllSchedule(): Promise<MatchEntity[]> {
-        return await this.repository.find({
-            where: { status: "scheduled" }
-        });
-    }
-
-    async finish(id: string): Promise<void> {
-        await this.repository.update(id, { status: "finished" });
-    }
+export class MatchService extends BaseDataService<Match, MatchEntity> {
+  constructor(repository: Repository<Match>, mapper: MatchMapper) {
+    super(Match, repository, mapper);
+  }
 }

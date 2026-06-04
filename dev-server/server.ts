@@ -1,6 +1,7 @@
 import express from "express";
 import type { Request, Response } from "express";
 import { DBClient } from "skorifydata";
+import * as skorifydata from "skorifydata";
 
 const app = express();
 app.use(express.json());
@@ -19,7 +20,7 @@ app.get("/health", (_req: Request, res: Response) => {
 });
 
 app.get("/exports", (_req: Request, res: Response) => {
-  const mod = require("skorifydata") as Record<string, unknown>;
+  const mod = skorifydata as unknown as Record<string, unknown>;
   const keys = Object.keys(mod).sort();
   res.json({
     ok: true,
@@ -91,7 +92,7 @@ app.put("/:entity/:id", async (_req: Request, res: Response) => {
     await dbClient.connect();
     console.log(`Updating ${entity} with id ${id}:`, _req.body);
     const service = dbClient.getServiceByName(entity);
-    const updatedData = await service.modifyById(id, _req.body);
+    const updatedData = await service.modify(id, _req.body);
     return res.json({ ok: true, [entity]: updatedData });
   } catch (error) {
     console.error(`Error updating ${entity} with id ${id}:`, error);

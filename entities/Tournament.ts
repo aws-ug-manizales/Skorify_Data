@@ -3,47 +3,77 @@ import {
   PrimaryGeneratedColumn,
   Column,
   CreateDateColumn,
+  UpdateDateColumn,
   OneToMany,
-} from 'typeorm';
-import type { TournamentTeam } from './TournamentTeam';
-import type { Group } from './Group';
-import type { Match } from './Match';
-import type { Payment } from './Payment';
-import type { Leaderboard } from './Leaderboard';
-import type { Instance } from './Instance';
+} from "typeorm";
+import type { Team } from "./Team";
+import type { Match } from "./Match";
+import type { TournamentInstance } from "./TournamentInstance";
+import { IsDate, IsIn, IsOptional, IsString, IsUUID } from "class-validator";
+import { MatchType } from "@skorify/domain/tournament";
 
-@Entity('tournaments')
+@Entity("tournaments")
 export class Tournament {
-  @PrimaryGeneratedColumn('uuid')
+  @PrimaryGeneratedColumn("uuid")
+  @IsUUID()
+  @IsOptional()
   id!: string;
 
-  @Column({ type: 'varchar' })
+  @Column({ type: "varchar" })
+  @IsOptional()
+  @IsString()
   name!: string;
 
-  @Column({ type: 'date', nullable: true })
-  start_date!: string | null;
+  @Column({
+    type: "enum",
+    enum: ["single_match_per_round", "home_and_away_per_round"],
+    default: "single_match_per_round",
+  })
+  @IsOptional()
+  @IsIn(["single_match_per_round", "home_and_away_per_round"])
+  match_type!: MatchType;
 
-  @Column({ type: 'date', nullable: true })
-  end_date!: string | null;
+  @Column({ type: "date" })
+  @IsDate()
+  start_date!: Date;
 
-  @CreateDateColumn({ type: 'timestamptz' })
+  @Column({ type: "date" })
+  @IsDate()
+  end_date!: Date;
+
+  @Column({ type: "enum", enum: ["active", "inactive", "terminated"], default: "active" })
+  @IsOptional()
+  @IsIn(["active", "inactive", "terminated"])
+  status!: "active" | "inactive" | "terminated";
+
+  @Column({ type: "varchar" })
+  @IsString()
+  @IsOptional()
+  token!: string;
+
+  @CreateDateColumn({ type: "timestamptz" })
+  @IsDate()
+  @IsOptional()
   created_at!: Date;
 
-  @OneToMany('TournamentTeam', 'tournament')
-  tournament_teams!: TournamentTeam[];
+  @UpdateDateColumn({ type: "timestamptz", nullable: true, default: null })
+  @IsDate()
+  @IsOptional()
+  updated_at!: Date | null;
 
-  @OneToMany('Group', 'tournament')
-  groups!: Group[];
+  @Column({ type: "timestamptz", nullable: true, default: null })
+  @IsOptional()
+  deleted_at!: Date | null;
 
-  @OneToMany('Match', 'tournament')
+  @OneToMany("Match", "tournament")
+  @IsOptional()
   matches!: Match[];
 
-  @OneToMany('Payment', 'tournament')
-  payments!: Payment[];
+  @OneToMany("Team", "tournament")
+  @IsOptional()
+  teams!: Team[];
 
-  @OneToMany('Leaderboard', 'tournament')
-  leaderboard!: Leaderboard[];
-
-  @OneToMany('Instance', 'tournament')
-  instances!: Instance[];
+  @OneToMany("TournamentInstance", "tournament")
+  @IsOptional()
+  instances!: TournamentInstance[];
 }

@@ -1,2 +1,7 @@
-allowBuilds:
-  skorifydata: true
+onlyBuiltDependencies:
+  - skorifydata
+  - "@skorify/domain"
+
+# Fuerza qs >= 6.15.2 (CVE-2026-8723; lo trae express transitivamente)
+overrides:
+  qs: ">=6.15.2"

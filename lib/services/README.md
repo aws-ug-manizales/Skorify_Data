@@ -10,14 +10,14 @@ All services extend `BaseDataService<T>`, which provides common CRUD operations 
 | `getById` | `(id: string) => Promise<T \| null>` | Finds one row by primary key |
 | `getAll` | `() => Promise<T[]>` | Returns every row |
 | `getByIDs` | `(ids: string[]) => Promise<T[]>` | Bulk lookup via `IN (...)` |
-| `modifyById` | `(id: string, data: Partial<T>) => Promise<T>` | Updates then returns the refreshed entity |
+| `modify` | `(id: string, data: Partial<T>) => Promise<T>` | Updates then returns the refreshed entity |
 | `deleteById` | `(id: string) => Promise<void>` | Hard-deletes by primary key |
 
 `protected repository` and `protected validateSchema` are also available inside the subclass.
 
 ## Lifecycle hooks
 
-`create` and `modifyById` call two hooks before writing to the database. Both are no-ops by default and can be overridden independently.
+`create` and `modify` call two hooks before writing to the database. Both are no-ops by default and can be overridden independently.
 
 | Hook | Default behaviour | When to override |
 |---|---|---|
