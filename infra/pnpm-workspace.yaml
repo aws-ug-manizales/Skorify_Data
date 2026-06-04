@@ -3,3 +3,4 @@ packages:
 
 allowBuilds:
   skorifydata: true
+  "@skorify/domain": true
