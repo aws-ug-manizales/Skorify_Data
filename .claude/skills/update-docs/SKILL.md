@@ -5,6 +5,8 @@ description: Regenerate and keep all repository documentation up to date. Use wh
 
 This skill keeps four documentation files in sync with the source code. Each file has a clear owner: read specific source files, then rewrite the target doc. Run from repo root (`Skorify_Data/`).
 
+**Language rule: all documentation must be written in Spanish.**
+
 **Output files:**
 
 | Doc | Source of truth |
