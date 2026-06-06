@@ -17,6 +17,7 @@ export class PredictionMapper extends BaseMapper {
       homeScore: json.home_score,
       earnedPoints: json.earned_points ?? 0,
       hasExactResult: json.has_exact_result ?? false,
+      isCalculated: json.is_calculated ?? false,
       createdAt: json.created_at,
     });
   }
@@ -31,6 +32,7 @@ export class PredictionMapper extends BaseMapper {
       home_score: entity.homeScore,
       earned_points: entity.earnedPoints,
       has_exact_result: entity.hasExactResult,
+      is_calculated: entity.isCalculated,
       user_enrollment_id: entity.userEnrollmentId,
       created_at: entity.createdAt,
     };

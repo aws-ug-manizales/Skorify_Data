@@ -2,6 +2,7 @@ import { validateOrReject, ValidationError } from "class-validator";
 import { plainToInstance } from "class-transformer";
 import {
   DeepPartial,
+  EntityManager,
   FindManyOptions,
   FindOptionsWhere,
   In,
@@ -72,6 +73,12 @@ export abstract class BaseDataService<
     const updated = await this.getById(data.id);
     if (!updated) throw new Error(`Entity with id ${data.id} not found`);
     return updated;
+  }
+
+  async runInTransaction<T>(
+    work: (manager: EntityManager) => Promise<T>,
+  ): Promise<T> {
+    return this.repository.manager.transaction(work);
   }
 
   async getAll(): Promise<DE[]> {
