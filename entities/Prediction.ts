@@ -66,6 +66,11 @@ export class Prediction {
   @IsBoolean()
   has_exact_result!: boolean;
 
+  @Column({ type: "boolean", default: false })
+  @IsOptional()
+  @IsBoolean()
+  is_calculated!: boolean;
+
   @CreateDateColumn({ type: "timestamptz" })
   @IsDate()
   created_at!: Date;
