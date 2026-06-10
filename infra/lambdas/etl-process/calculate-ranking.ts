@@ -5,6 +5,7 @@ import { RetryExhaustedError } from "../../utils/retry.js";
 import type { CalculateInstanceRankingDetail } from "../../utils/types.js";
 
 const BACKEND_URL = process.env.BACKEND_URL ?? "";
+const M2M_SECRET_ARN = process.env.M2M_SECRET_ARN ?? "";
 
 const logger = createEventLogger("CalculateRankingLambda");
 
@@ -30,7 +31,7 @@ export const handler = async (event: SQSEvent): Promise<void> => {
     return;
   }
 
-  const backend = new BackendClient({ baseUrl: BACKEND_URL });
+  const backend = new BackendClient({ baseUrl: BACKEND_URL, m2mSecretArn: M2M_SECRET_ARN });
 
   for (const record of event.Records) {
     const detail = parseRecord(record);
