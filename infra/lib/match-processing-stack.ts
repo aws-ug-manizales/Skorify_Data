@@ -35,6 +35,8 @@ export class MatchProcessingStack extends cdk.Stack {
 
     const { envName, vpcName, backendUrl } = props;
 
+    const lambdaMemorySize = envName === 'prod' ? 1024 : 512;
+
     const dbSecretArn = ssm.StringParameter.valueFromLookup(
       this,
       `/skorify/${envName}/db-secret-arn`,
@@ -89,7 +91,7 @@ export class MatchProcessingStack extends cdk.Stack {
     const notifyUserQueue = createQueue("NotifyUserQueue");
     const calculateRankingQueue = createQueue("CalculateRankingQueue");
 
-    const workerLambda = createLambda("WorkerLambda", "lambdas/etl-process/worker.ts", this);
+    const workerLambda = createLambda("WorkerLambda", "lambdas/etl-process/worker.ts", this, lambdaMemorySize);
     workerLambda.addEnvironment("EVENT_BUS_NAME", this.bus.eventBusName);
     workerLambda.addEnvironment("MATCH_MAPPING_TABLE", matchMappingTable.tableName);
     workerLambda.addEnvironment("TOURNAMENT_MAPPING_TABLE", tournamentMappingTable.tableName);
@@ -101,7 +103,8 @@ export class MatchProcessingStack extends cdk.Stack {
     const finishMatchLambda = createLambda(
       "FinishMatchLambda",
       "lambdas/etl-process/finish-match.ts",
-      this
+      this,
+      lambdaMemorySize
     );
     finishMatchLambda.addEnvironment(ENV.BACKEND_URL, backendUrl);
     finishMatchLambda.addEnvironment(ENV.M2M_SECRET_ARN, m2mCredentialsSecretArn);
@@ -228,12 +231,13 @@ export class MatchProcessingStack extends cdk.Stack {
       ],
     });
 
-    new createMatchesFlow(this, "CreateMatchesFlow", { 
+    new createMatchesFlow(this, "CreateMatchesFlow", {
       vpc,
       dbSecretArn,
       matchMappingTable,
       teamMappingTable,
-      tournamentMappingTable
+      tournamentMappingTable,
+      memorySize: lambdaMemorySize
     });
   }
 }
