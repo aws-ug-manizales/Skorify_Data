@@ -7,7 +7,9 @@ import * as sqs from "aws-cdk-lib/aws-sqs";
 import * as sources from "aws-cdk-lib/aws-lambda-event-sources";
 import * as ssm from "aws-cdk-lib/aws-ssm";
 import * as iam from "aws-cdk-lib/aws-iam";
+import * as sns from "aws-cdk-lib/aws-sns";
 import * as cloudwatch from "aws-cdk-lib/aws-cloudwatch";
+import * as cwActions from "aws-cdk-lib/aws-cloudwatch-actions";
 import { Duration } from "aws-cdk-lib";
 import {
   EventSources,
@@ -25,6 +27,7 @@ export interface MatchProcessingStackProps extends cdk.StackProps {
   envName: string;
   vpcName: string;
   backendUrl: string;
+  opsAlertsTopic: sns.ITopic;
 }
 
 export class MatchProcessingStack extends cdk.Stack {
@@ -66,7 +69,7 @@ export class MatchProcessingStack extends cdk.Stack {
       retentionPeriod: Duration.days(14),
     });
 
-    new cloudwatch.Alarm(this, "DLQAlarm", {
+    const dlqAlarm = new cloudwatch.Alarm(this, "DLQAlarm", {
       metric: dlq.metricApproximateNumberOfMessagesVisible({
         period: Duration.minutes(5),
         statistic: "Sum",
@@ -77,6 +80,7 @@ export class MatchProcessingStack extends cdk.Stack {
         cloudwatch.ComparisonOperator.GREATER_THAN_THRESHOLD,
       alarmDescription: "Mensajes en la DLQ — partidos que no pudieron procesarse",
     });
+    dlqAlarm.addAlarmAction(new cwActions.SnsAction(props.opsAlertsTopic));
 
     const createQueue = (name: string): sqs.Queue =>
       new sqs.Queue(this, name, {
