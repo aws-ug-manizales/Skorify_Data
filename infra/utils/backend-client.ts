@@ -1,5 +1,9 @@
+import {
+  GetSecretValueCommand,
+  SecretsManagerClient,
+} from "@aws-sdk/client-secrets-manager";
 import { withRetry } from "./retry.js";
-import type { BackendClientConfig, BackendMatch } from "./types.js";
+import type { BackendClientConfig, BackendMatch, CalculateInstanceRankingDetail, MatchFinishedDetail } from "./types.js";
 
 export class BackendClientError extends Error {
   constructor(
@@ -12,82 +16,93 @@ export class BackendClientError extends Error {
   }
 }
 
+interface M2MCredentials {
+  clientId: string;
+  clientSecret: string;
+  tokenEndpoint: string;
+  scope: string;
+}
+
+interface TokenCache {
+  value: string;
+  expiresAt: number;
+}
+
+const secretsManager = new SecretsManagerClient({});
+let cachedCredentials: M2MCredentials | null = null;
+let cachedToken: TokenCache | null = null;
+
 export class BackendClient {
   private readonly baseUrl: string;
+  private readonly m2mSecretArn: string;
   private readonly retryOptions: BackendClientConfig["retryOptions"];
-  private cachedToken: string | null = null;
-  private tokenExpiration: number = 0;
 
   constructor(config: BackendClientConfig) {
     this.baseUrl = config.baseUrl.replace(/\/+$/, "");
+    this.m2mSecretArn = config.m2mSecretArn;
     this.retryOptions = config.retryOptions ?? {};
   }
 
-    // Nuevo método: Obtiene y cachea el token de Cognito
-  private async getM2MToken(): Promise<string> {
-    // Si el token existe y aún le queda más de 1 minuto de vida, lo reutilizamos
-    if (this.cachedToken && Date.now() < this.tokenExpiration) {
-      return this.cachedToken;
+  private async getToken(): Promise<string> {
+    const now = Date.now();
+    if (cachedToken && now < cachedToken.expiresAt) return cachedToken.value;
+
+    if (!cachedCredentials) {
+      const { SecretString } = await secretsManager.send(
+        new GetSecretValueCommand({ SecretId: this.m2mSecretArn }),
+      );
+      if (!SecretString)
+        throw new Error(`M2M secret ${this.m2mSecretArn} returned empty value`);
+      cachedCredentials = JSON.parse(SecretString) as M2MCredentials;
     }
 
-    const clientId = process.env.COGNITO_CLIENT_ID;
-    const clientSecret = process.env.COGNITO_CLIENT_SECRET;
-    const domain = process.env.COGNITO_DOMAIN;
+    const { clientId, clientSecret, tokenEndpoint, scope } = cachedCredentials;
+    const basicAuth = Buffer.from(`${clientId}:${clientSecret}`).toString(
+      "base64",
+    );
 
-    if (!clientId || !clientSecret || !domain) {
-      throw new Error("Faltan las variables de entorno para Cognito M2M (CLIENT_ID, CLIENT_SECRET o DOMAIN)");
-    }
-
-    const credentials = Buffer.from(`${clientId}:${clientSecret}`).toString('base64');
-    const params = new URLSearchParams();
-    params.append('grant_type', 'client_credentials');
-    params.append('scope', 'data-backend/read');
-
-    const response = await fetch(`${domain}/oauth2/token`, {
-      method: 'POST',
+    const res = await fetch(tokenEndpoint, {
+      method: "POST",
       headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-        'Authorization': `Basic ${credentials}`
+        "Content-Type": "application/x-www-form-urlencoded",
+        Authorization: `Basic ${basicAuth}`,
       },
-      body: params
+      body: new URLSearchParams({
+        grant_type: "client_credentials",
+        scope,
+      }).toString(),
     });
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(`Fallo al obtener el token M2M de Cognito: ${errorText}`);
+    if (!res.ok) {
+      const text = await res.text();
+      throw new Error(`Token request failed (${res.status}): ${text}`);
     }
 
-    const data = await response.json() as { access_token: string, expires_in: number };
-    
-    this.cachedToken = data.access_token;
-    // expires_in viene en segundos. Lo pasamos a milisegundos y restamos 60 seg de margen de seguridad
-    this.tokenExpiration = Date.now() + (data.expires_in * 1000) - 60000;
+    const { access_token, expires_in } = (await res.json()) as {
+      access_token: string;
+      expires_in: number;
+    };
 
-    return this.cachedToken;
+    cachedToken = {
+      value: access_token,
+      expiresAt: now + (expires_in - 300) * 1000,
+    };
+    return access_token;
   }
 
-private async request<T = void>(
+  private async request<T = void>(
     method: string,
     path: string,
-    body?: unknown
+    body?: unknown,
   ): Promise<T> {
     return withRetry(async () => {
-      // 1. Pedimos el token (usará el cacheado si es válido)
-      const token = await this.getM2MToken();
-
-      // 2. Preparamos los headers inyectando la Autorización
-      const headers: Record<string, string> = {
-        "Authorization": `Bearer ${token}`
-      };
-
-      if (body != null) {
-        headers["Content-Type"] = "application/json";
-      }
-
-      // 3. Hacemos la petición al backend con el token incluido
+      const token = await this.getToken();
       const response = await fetch(`${this.baseUrl}${path}`, {
         method,
-        headers,  
+        headers: {
+          Authorization: `Bearer ${token}`,
+          ...(body != null ? { "Content-Type": "application/json" } : {}),
+        },
         body: body != null ? JSON.stringify(body) : undefined,
       });
 
@@ -96,7 +111,7 @@ private async request<T = void>(
         throw new BackendClientError(
           `Backend returned ${response.status} for ${method} ${path}: ${text}`,
           response.status,
-          text
+          text,
         );
       }
 
@@ -112,19 +127,22 @@ private async request<T = void>(
     return this.request<BackendMatch[]>("GET", "/matches?status=finished");
   }
 
-  async processMatch(matchId: string, detail: Record<string, unknown>): Promise<void> {
+  async processMatch(
+    matchId: string,
+    detail: MatchFinishedDetail,
+  ): Promise<void> {
     return this.request("POST", `/matches/${matchId}/process`, detail);
   }
 
   async getTournamentInstances(
-    tournamentId: string
-  ): Promise<Array<{ id: string; name: string; tournament_id: string; state: string }>> {
+    tournamentId: string,
+  ): Promise<
+    Array<{ id: string; name: string; tournament_id: string; state: string }>
+  > {
     return this.request("GET", `/tournaments/${tournamentId}/instances`);
   }
 
-  async calculateInstanceRanking(
-    instanceId: string
-  ): Promise<{
+  async calculateInstanceRanking(instanceId: string): Promise<{
     instance_id: string;
     rank: number;
     total_points: number;
@@ -136,12 +154,12 @@ private async request<T = void>(
 
   async calculateTournamentInstanceRanking(
     instanceId: string,
-    detail: Record<string, unknown>
+    detail: CalculateInstanceRankingDetail,
   ): Promise<void> {
     return this.request(
       "POST",
       `/tournament-instance/${instanceId}/calculate-tournament-instance-ranking`,
-      detail
+      detail,
     );
   }
 

@@ -8,6 +8,7 @@ import * as sources from "aws-cdk-lib/aws-lambda-event-sources";
 import * as sfn from "aws-cdk-lib/aws-stepfunctions";
 import * as sfnTasks from "aws-cdk-lib/aws-stepfunctions-tasks";
 import * as ssm from "aws-cdk-lib/aws-ssm";
+import * as secretsmanager from "aws-cdk-lib/aws-secretsmanager";
 import * as cloudwatch from "aws-cdk-lib/aws-cloudwatch";
 import { Duration } from "aws-cdk-lib";
 import {
@@ -46,6 +47,17 @@ export class MatchProcessingStack extends cdk.Stack {
     const dbSecretArn = ssm.StringParameter.valueFromLookup(
       this,
       `/skorify/${envName}/db-secret-arn`,
+    );
+
+    const m2mCredentialsSecretArn = ssm.StringParameter.valueFromLookup(
+      this,
+      `/skorify/${envName}/m2m-credentials-arn`,
+    );
+
+    const m2mSecret = secretsmanager.Secret.fromSecretCompleteArn(
+      this,
+      "M2MCredentialsSecret",
+      m2mCredentialsSecretArn,
     );
 
     const vpc = ec2.Vpc.fromLookup(this, "ImportedVpc", { vpcName });
@@ -106,6 +118,8 @@ export class MatchProcessingStack extends cdk.Stack {
       this
     );
     finishMatchLambda.addEnvironment(ENV.BACKEND_URL, backendUrl);
+    finishMatchLambda.addEnvironment(ENV.M2M_SECRET_ARN, m2mCredentialsSecretArn);
+    m2mSecret.grantRead(finishMatchLambda);
     finishMatchLambda.addEventSource(
       new sources.SqsEventSource(finishMatchQueue, { batchSize: 1 })
     );
@@ -116,6 +130,8 @@ export class MatchProcessingStack extends cdk.Stack {
       this
     );
     notifyUsersLambda.addEnvironment(ENV.BACKEND_URL, backendUrl);
+    notifyUsersLambda.addEnvironment(ENV.M2M_SECRET_ARN, m2mCredentialsSecretArn);
+    m2mSecret.grantRead(notifyUsersLambda);
     notifyUsersLambda.addEventSource(
       new sources.SqsEventSource(notifyUserQueue, { batchSize: 1 })
     );
@@ -126,6 +142,8 @@ export class MatchProcessingStack extends cdk.Stack {
       this
     );
     calculateRankingLambda.addEnvironment(ENV.BACKEND_URL, backendUrl);
+    calculateRankingLambda.addEnvironment(ENV.M2M_SECRET_ARN, m2mCredentialsSecretArn);
+    m2mSecret.grantRead(calculateRankingLambda);
     calculateRankingLambda.addEventSource(
       new sources.SqsEventSource(calculateRankingQueue, { batchSize: 1 })
     );
