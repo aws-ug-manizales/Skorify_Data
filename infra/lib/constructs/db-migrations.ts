@@ -54,7 +54,7 @@ export class DbMigrations extends Construct {
       // Migraciones pueden tardar en DBs frías; 2 min es suficiente margen
       timeout: cdk.Duration.minutes(2),
       vpc,
-      vpcSubnets: { subnetType: ec2.SubnetType.PRIVATE_ISOLATED },
+      vpcSubnets: { subnetType: ec2.SubnetType.PRIVATE_WITH_EGRESS },
       environment: {
         DB_SECRET_ARN: dbSecretArn,
         DB_NAME: dbName,
@@ -68,6 +68,8 @@ export class DbMigrations extends Construct {
         externalModules: [
           'mysql', 'mysql2', 'sqlite3', 'better-sqlite3', 'tedious', 'oracledb', 'pg-native',
         ],
+        // CI=true tells pnpm to skip the interactive TTY confirmation when purging node_modules
+        environment: { CI: 'true' },
         commandHooks: {
           beforeBundling: () => [],
           beforeInstall: () => [],

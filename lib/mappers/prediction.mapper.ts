@@ -1,6 +1,5 @@
 import { DomainEvent } from "@skorify/domain/core";
 import {
-  PredictionAttributes,
   PredictionEntity,
 } from "@skorify/domain/prediction";
 import { BaseMapper } from "./base.mapper";
@@ -17,6 +16,7 @@ export class PredictionMapper extends BaseMapper {
       homeScore: json.home_score,
       earnedPoints: json.earned_points ?? 0,
       hasExactResult: json.has_exact_result ?? false,
+      isCalculated: json.is_calculated ?? false,
       createdAt: json.created_at,
     });
   }
@@ -32,6 +32,7 @@ export class PredictionMapper extends BaseMapper {
       earned_points: entity.earnedPoints,
       has_exact_result: entity.hasExactResult,
       user_enrollment_id: entity.userEnrollmentId,
+      is_calculated: entity.isCalculated,
       created_at: entity.createdAt,
     };
   }

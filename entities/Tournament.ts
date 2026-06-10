@@ -16,6 +16,7 @@ import { MatchType } from "@skorify/domain/tournament";
 export class Tournament {
   @PrimaryGeneratedColumn("uuid")
   @IsUUID()
+  @IsOptional()
   id!: string;
 
   @Column({ type: "varchar" })
@@ -26,21 +27,24 @@ export class Tournament {
   @Column({
     type: "enum",
     enum: ["single_match_per_round", "home_and_away_per_round"],
-    default: "group",
+    default: "single_match_per_round",
   })
   @IsOptional()
   @IsIn(["single_match_per_round", "home_and_away_per_round"])
   match_type!: MatchType;
 
-  @Column({ type: "date", nullable: true })
+  @Column({ type: "date" })
   @IsDate()
-  @IsOptional()
-  start_date!: string | null;
+  start_date!: Date;
 
-  @Column({ type: "date", nullable: true })
+  @Column({ type: "date" })
   @IsDate()
+  end_date!: Date;
+
+  @Column({ type: "enum", enum: ["active", "inactive", "terminated"], default: "active" })
   @IsOptional()
-  end_date!: string | null;
+  @IsIn(["active", "inactive", "terminated"])
+  status!: "active" | "inactive" | "terminated";
 
   @Column({ type: "varchar" })
   @IsString()
@@ -49,6 +53,7 @@ export class Tournament {
 
   @CreateDateColumn({ type: "timestamptz" })
   @IsDate()
+  @IsOptional()
   created_at!: Date;
 
   @UpdateDateColumn({ type: "timestamptz", nullable: true, default: null })

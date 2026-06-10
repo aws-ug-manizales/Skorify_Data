@@ -33,7 +33,7 @@ export class NetworkingStack extends cdk.Stack {
       subnetConfiguration: [
         {
           name: 'isolated',
-          subnetType: ec2.SubnetType.PRIVATE_ISOLATED,
+          subnetType: ec2.SubnetType.PRIVATE_WITH_EGRESS,
           cidrMask: 24,
         },
       ],
