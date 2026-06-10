@@ -17,6 +17,7 @@ export interface CalculateInstanceRankingDetail {
 
 export interface BackendClientConfig {
   baseUrl: string;
+  m2mSecretArn: string;
   retryOptions?: RetryOptions;
 }
 

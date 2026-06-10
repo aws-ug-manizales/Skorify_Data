@@ -27,4 +27,5 @@ export const LAMBDA_DEFAULTS = {
 export const ENV = {
   BACKEND_URL: "BACKEND_URL",
   EVENT_BUS_NAME: "EVENT_BUS_NAME",
+  M2M_SECRET_ARN: "M2M_SECRET_ARN",
 } as const;

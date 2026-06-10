@@ -5,17 +5,16 @@ import * as events from "aws-cdk-lib/aws-events";
 import * as targets from "aws-cdk-lib/aws-events-targets";
 import * as sqs from "aws-cdk-lib/aws-sqs";
 import * as sources from "aws-cdk-lib/aws-lambda-event-sources";
-import * as sfn from "aws-cdk-lib/aws-stepfunctions";
-import * as sfnTasks from "aws-cdk-lib/aws-stepfunctions-tasks";
 import * as ssm from "aws-cdk-lib/aws-ssm";
+import * as iam from "aws-cdk-lib/aws-iam";
+import * as sns from "aws-cdk-lib/aws-sns";
 import * as cloudwatch from "aws-cdk-lib/aws-cloudwatch";
+import * as cwActions from "aws-cdk-lib/aws-cloudwatch-actions";
 import { Duration } from "aws-cdk-lib";
 import {
-  SKORIFY_DATA_BUS,
   EventSources,
   DetailTypes,
   QUEUE_DEFAULTS,
-  LAMBDA_DEFAULTS,
   ENV,
 } from "./constants";
 
@@ -28,6 +27,7 @@ export interface MatchProcessingStackProps extends cdk.StackProps {
   envName: string;
   vpcName: string;
   backendUrl: string;
+  opsAlertsTopic: sns.ITopic;
 }
 
 export class MatchProcessingStack extends cdk.Stack {
@@ -38,10 +38,22 @@ export class MatchProcessingStack extends cdk.Stack {
 
     const { envName, vpcName, backendUrl } = props;
 
+    const lambdaMemorySize = envName === 'prod' ? 1024 : 512;
+
     const dbSecretArn = ssm.StringParameter.valueFromLookup(
       this,
       `/skorify/${envName}/db-secret-arn`,
     );
+
+    const m2mCredentialsSecretArn = ssm.StringParameter.valueFromLookup(
+      this,
+      `/skorify/${envName}/m2m-credentials-arn`,
+    );
+
+    const m2mSecretReadPolicy = new iam.PolicyStatement({
+      actions: ["secretsmanager:GetSecretValue", "secretsmanager:DescribeSecret"],
+      resources: [m2mCredentialsSecretArn],
+    });
 
     const vpc = ec2.Vpc.fromLookup(this, "ImportedVpc", { vpcName });
 
@@ -57,7 +69,7 @@ export class MatchProcessingStack extends cdk.Stack {
       retentionPeriod: Duration.days(14),
     });
 
-    new cloudwatch.Alarm(this, "DLQAlarm", {
+    const dlqAlarm = new cloudwatch.Alarm(this, "DLQAlarm", {
       metric: dlq.metricApproximateNumberOfMessagesVisible({
         period: Duration.minutes(5),
         statistic: "Sum",
@@ -68,6 +80,7 @@ export class MatchProcessingStack extends cdk.Stack {
         cloudwatch.ComparisonOperator.GREATER_THAN_THRESHOLD,
       alarmDescription: "Mensajes en la DLQ — partidos que no pudieron procesarse",
     });
+    dlqAlarm.addAlarmAction(new cwActions.SnsAction(props.opsAlertsTopic));
 
     const createQueue = (name: string): sqs.Queue =>
       new sqs.Queue(this, name, {
@@ -82,7 +95,7 @@ export class MatchProcessingStack extends cdk.Stack {
     const notifyUserQueue = createQueue("NotifyUserQueue");
     const calculateRankingQueue = createQueue("CalculateRankingQueue");
 
-    const workerLambda = createLambda("WorkerLambda", "lambdas/etl-process/worker.ts", this);
+    const workerLambda = createLambda("WorkerLambda", "lambdas/etl-process/worker.ts", this, lambdaMemorySize);
     workerLambda.addEnvironment("EVENT_BUS_NAME", this.bus.eventBusName);
     workerLambda.addEnvironment("MATCH_MAPPING_TABLE", matchMappingTable.tableName);
     workerLambda.addEnvironment("TOURNAMENT_MAPPING_TABLE", tournamentMappingTable.tableName);
@@ -94,9 +107,12 @@ export class MatchProcessingStack extends cdk.Stack {
     const finishMatchLambda = createLambda(
       "FinishMatchLambda",
       "lambdas/etl-process/finish-match.ts",
-      this
+      this,
+      lambdaMemorySize
     );
     finishMatchLambda.addEnvironment(ENV.BACKEND_URL, backendUrl);
+    finishMatchLambda.addEnvironment(ENV.M2M_SECRET_ARN, m2mCredentialsSecretArn);
+    finishMatchLambda.addToRolePolicy(m2mSecretReadPolicy);
     finishMatchLambda.addEventSource(
       new sources.SqsEventSource(finishMatchQueue, { batchSize: 1 })
     );
@@ -107,6 +123,8 @@ export class MatchProcessingStack extends cdk.Stack {
       this
     );
     notifyUsersLambda.addEnvironment(ENV.BACKEND_URL, backendUrl);
+    notifyUsersLambda.addEnvironment(ENV.M2M_SECRET_ARN, m2mCredentialsSecretArn);
+    notifyUsersLambda.addToRolePolicy(m2mSecretReadPolicy);
     notifyUsersLambda.addEventSource(
       new sources.SqsEventSource(notifyUserQueue, { batchSize: 1 })
     );
@@ -117,6 +135,8 @@ export class MatchProcessingStack extends cdk.Stack {
       this
     );
     calculateRankingLambda.addEnvironment(ENV.BACKEND_URL, backendUrl);
+    calculateRankingLambda.addEnvironment(ENV.M2M_SECRET_ARN, m2mCredentialsSecretArn);
+    calculateRankingLambda.addToRolePolicy(m2mSecretReadPolicy);
     calculateRankingLambda.addEventSource(
       new sources.SqsEventSource(calculateRankingQueue, { batchSize: 1 })
     );
@@ -215,12 +235,13 @@ export class MatchProcessingStack extends cdk.Stack {
       ],
     });
 
-    new createMatchesFlow(this, "CreateMatchesFlow", { 
+    new createMatchesFlow(this, "CreateMatchesFlow", {
       vpc,
       dbSecretArn,
       matchMappingTable,
       teamMappingTable,
-      tournamentMappingTable
+      tournamentMappingTable,
+      memorySize: lambdaMemorySize
     });
   }
 }

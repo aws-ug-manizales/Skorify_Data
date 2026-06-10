@@ -19,6 +19,7 @@ export interface CreateMatchesFlowProps {
   matchMappingTable: dynamodb.Table;
   teamMappingTable: dynamodb.Table;
   tournamentMappingTable: dynamodb.Table;
+  memorySize: number;
 }
 
 export class createMatchesFlow extends Construct {
@@ -44,7 +45,8 @@ export class createMatchesFlow extends Construct {
     this.matchesByCompetitionLambda = createLambda(
       "GetMatchesByCompetitionLambda",
       path.join(__dirname, '..', '..', 'lambdas', 'create-tournament', 'get-matches-by-competition.ts'),
-      this
+      this,
+      props.memorySize
     );
 
     this.matchesByCompetitionLambda.addEnvironment("FOOTBALL_DATA_API_TOKEN", process.env.FOOTBALL_DATA_API_TOKEN || '');
@@ -54,6 +56,7 @@ export class createMatchesFlow extends Construct {
       handler: 'handler',
       runtime: LAMBDA_DEFAULTS.runtime,
       timeout: LAMBDA_DEFAULTS.timeout,
+      memorySize: props.memorySize,
       vpc: props.vpc,
       vpcSubnets: { subnetType: ec2.SubnetType.PRIVATE_WITH_EGRESS },
       environment: {
@@ -75,6 +78,7 @@ export class createMatchesFlow extends Construct {
       handler: 'handler',
       runtime: LAMBDA_DEFAULTS.runtime,
       timeout: LAMBDA_DEFAULTS.timeout,
+      memorySize: props.memorySize,
       vpc: props.vpc,
       vpcSubnets: { subnetType: ec2.SubnetType.PRIVATE_WITH_EGRESS },
       environment: {
@@ -96,6 +100,7 @@ export class createMatchesFlow extends Construct {
       handler: 'handler',
       runtime: LAMBDA_DEFAULTS.runtime,
       timeout: LAMBDA_DEFAULTS.timeout,
+      memorySize: props.memorySize,
       vpc: props.vpc,
       vpcSubnets: { subnetType: ec2.SubnetType.PRIVATE_WITH_EGRESS },
       environment: {

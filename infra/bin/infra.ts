@@ -20,5 +20,11 @@ const vpcName: string =
 const backendUrl =
     app.node.tryGetContext("backendUrl") ?? process.env.BACKEND_URL ?? "";
 
-new DatabaseStack(app, `skorify-database-${ envName }`, { env, envName, vpcName });
-new MatchProcessingStack(app, `skorify-event-bridge-${ envName }`, { env, envName, vpcName, backendUrl });
+const databaseStack = new DatabaseStack(app, `skorify-database-${ envName }`, { env, envName, vpcName });
+new MatchProcessingStack(app, `skorify-event-bridge-${ envName }`, {
+    env,
+    envName,
+    vpcName,
+    backendUrl,
+    opsAlertsTopic: databaseStack.opsAlertsTopic,
+});
