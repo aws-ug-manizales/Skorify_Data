@@ -5,18 +5,14 @@ import * as events from "aws-cdk-lib/aws-events";
 import * as targets from "aws-cdk-lib/aws-events-targets";
 import * as sqs from "aws-cdk-lib/aws-sqs";
 import * as sources from "aws-cdk-lib/aws-lambda-event-sources";
-import * as sfn from "aws-cdk-lib/aws-stepfunctions";
-import * as sfnTasks from "aws-cdk-lib/aws-stepfunctions-tasks";
 import * as ssm from "aws-cdk-lib/aws-ssm";
-import * as secretsmanager from "aws-cdk-lib/aws-secretsmanager";
+import * as iam from "aws-cdk-lib/aws-iam";
 import * as cloudwatch from "aws-cdk-lib/aws-cloudwatch";
 import { Duration } from "aws-cdk-lib";
 import {
-  SKORIFY_DATA_BUS,
   EventSources,
   DetailTypes,
   QUEUE_DEFAULTS,
-  LAMBDA_DEFAULTS,
   ENV,
 } from "./constants";
 
@@ -49,11 +45,10 @@ export class MatchProcessingStack extends cdk.Stack {
       `/skorify/${envName}/m2m-credentials-arn`,
     );
 
-    const m2mSecret = secretsmanager.Secret.fromSecretCompleteArn(
-      this,
-      "M2MCredentialsSecret",
-      m2mCredentialsSecretArn,
-    );
+    const m2mSecretReadPolicy = new iam.PolicyStatement({
+      actions: ["secretsmanager:GetSecretValue", "secretsmanager:DescribeSecret"],
+      resources: [m2mCredentialsSecretArn],
+    });
 
     const vpc = ec2.Vpc.fromLookup(this, "ImportedVpc", { vpcName });
 
@@ -110,7 +105,7 @@ export class MatchProcessingStack extends cdk.Stack {
     );
     finishMatchLambda.addEnvironment(ENV.BACKEND_URL, backendUrl);
     finishMatchLambda.addEnvironment(ENV.M2M_SECRET_ARN, m2mCredentialsSecretArn);
-    m2mSecret.grantRead(finishMatchLambda);
+    finishMatchLambda.addToRolePolicy(m2mSecretReadPolicy);
     finishMatchLambda.addEventSource(
       new sources.SqsEventSource(finishMatchQueue, { batchSize: 1 })
     );
@@ -122,7 +117,7 @@ export class MatchProcessingStack extends cdk.Stack {
     );
     notifyUsersLambda.addEnvironment(ENV.BACKEND_URL, backendUrl);
     notifyUsersLambda.addEnvironment(ENV.M2M_SECRET_ARN, m2mCredentialsSecretArn);
-    m2mSecret.grantRead(notifyUsersLambda);
+    notifyUsersLambda.addToRolePolicy(m2mSecretReadPolicy);
     notifyUsersLambda.addEventSource(
       new sources.SqsEventSource(notifyUserQueue, { batchSize: 1 })
     );
@@ -134,7 +129,7 @@ export class MatchProcessingStack extends cdk.Stack {
     );
     calculateRankingLambda.addEnvironment(ENV.BACKEND_URL, backendUrl);
     calculateRankingLambda.addEnvironment(ENV.M2M_SECRET_ARN, m2mCredentialsSecretArn);
-    m2mSecret.grantRead(calculateRankingLambda);
+    calculateRankingLambda.addToRolePolicy(m2mSecretReadPolicy);
     calculateRankingLambda.addEventSource(
       new sources.SqsEventSource(calculateRankingQueue, { batchSize: 1 })
     );
