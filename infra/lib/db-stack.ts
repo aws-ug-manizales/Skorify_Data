@@ -5,6 +5,11 @@ import * as autoscaling from 'aws-cdk-lib/aws-autoscaling';
 import * as rds from 'aws-cdk-lib/aws-rds';
 import * as ssm from 'aws-cdk-lib/aws-ssm';
 import * as events from 'aws-cdk-lib/aws-events';
+import * as sns from 'aws-cdk-lib/aws-sns';
+import * as subscriptions from 'aws-cdk-lib/aws-sns-subscriptions';
+import * as cloudwatch from 'aws-cdk-lib/aws-cloudwatch';
+import * as cwActions from 'aws-cdk-lib/aws-cloudwatch-actions';
+import { Duration } from 'aws-cdk-lib';
 import { RdsScheduler } from './constructs/rds-scheduler';
 import { DbMigrations } from './constructs/db-migrations';
 
@@ -15,6 +20,7 @@ export interface DatabaseStackProps extends cdk.StackProps {
 
 export class DatabaseStack extends cdk.Stack {
   public readonly database: rds.DatabaseInstance;
+  public readonly opsAlertsTopic: sns.Topic;
 
   constructor(scope: Construct, id: string, props: DatabaseStackProps) {
     super(scope, id, props);
@@ -117,6 +123,58 @@ export class DatabaseStack extends cdk.Stack {
       dbName: 'skorify',
       database: this.database,
     });
+
+    // Tópico de alertas operativas. El ARN se publica en SSM para que el
+    // backend (repo aparte) enganche sus propias alarmas al mismo tópico.
+    this.opsAlertsTopic = new sns.Topic(this, 'OpsAlertsTopic', {
+      topicName: `skorify-${envName}-ops-alerts`,
+    });
+
+    const opsEmails = [
+      'jal.alejandro@gmail.com',
+      'santiagoloaizagiraldo@gmail.com',
+      'edisoncastrosanchez@gmail.com',
+      'awsugmanizales@gmail.com',
+    ];
+    for (const email of opsEmails) {
+      this.opsAlertsTopic.addSubscription(new subscriptions.EmailSubscription(email));
+    }
+
+    new ssm.StringParameter(this, 'OpsAlertsTopicArnParam', {
+      parameterName: `/skorify/${envName}/ops-alerts-topic-arn`,
+      stringValue: this.opsAlertsTopic.topicArn,
+      description: 'ARN del tópico SNS de alertas operativas',
+    });
+
+    const alertAction = new cwActions.SnsAction(this.opsAlertsTopic);
+
+    // Las t4g son burstables: con el balance de créditos en 0 la instancia
+    // queda limitada a su CPU base (ya pasó el 3 de junio de 2026 en dev).
+    const cpuCreditAlarm = new cloudwatch.Alarm(this, 'DbCpuCreditBalanceAlarm', {
+      metric: this.database.metric('CPUCreditBalance', {
+        period: Duration.minutes(15),
+        statistic: 'Minimum',
+      }),
+      threshold: 100,
+      evaluationPeriods: 1,
+      comparisonOperator: cloudwatch.ComparisonOperator.LESS_THAN_THRESHOLD,
+      alarmDescription: 'Créditos de CPU de la RDS por agotarse — la instancia quedará limitada a su CPU base',
+    });
+    cpuCreditAlarm.addAlarmAction(alertAction);
+
+    // ~80% del max_connections aproximado de cada clase de instancia:
+    // t4g.small ~225 (dev), t4g.medium ~440 (prod).
+    const dbConnectionsAlarm = new cloudwatch.Alarm(this, 'DbConnectionsAlarm', {
+      metric: this.database.metricDatabaseConnections({
+        period: Duration.minutes(5),
+        statistic: 'Maximum',
+      }),
+      threshold: envName === 'prod' ? 350 : 180,
+      evaluationPeriods: 1,
+      comparisonOperator: cloudwatch.ComparisonOperator.GREATER_THAN_THRESHOLD,
+      alarmDescription: 'Conexiones a la RDS cerca del límite de la instancia',
+    });
+    dbConnectionsAlarm.addAlarmAction(alertAction);
 
     new cdk.CfnOutput(this, 'DBHost', {
       value: this.database.dbInstanceEndpointAddress,
