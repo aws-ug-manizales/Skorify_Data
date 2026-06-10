@@ -75,7 +75,10 @@ export class DatabaseStack extends cdk.Stack {
 
     this.database = new rds.DatabaseInstance(this, 'skorifyDatabase', {
       engine: rds.DatabaseInstanceEngine.postgres({ version: rds.PostgresEngineVersion.VER_18 }),
-      instanceType: ec2.InstanceType.of(ec2.InstanceClass.T4G, ec2.InstanceSize.MICRO),
+      instanceType: ec2.InstanceType.of(
+        ec2.InstanceClass.T4G,
+        envName === 'prod' ? ec2.InstanceSize.MEDIUM : ec2.InstanceSize.SMALL,
+      ),
       vpc,
       securityGroups: [dbSecurityGroup], 
       vpcSubnets: { 
