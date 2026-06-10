@@ -46,7 +46,7 @@ export class UserEnrollment {
   @UpdateDateColumn({ type: 'timestamptz', nullable: true, default: null })
   updated_at!: Date | null;
 
-  @UpdateDateColumn({ type: 'timestamptz', nullable: true, default: null })
+  @Column({ type: 'timestamptz', nullable: true, default: null })
   joined_at!: Date | null;
 
   @ManyToOne(() => User, (u) => u.user_enrollments, { onDelete: 'CASCADE' })
