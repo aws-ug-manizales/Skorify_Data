@@ -13,7 +13,7 @@ const db = knex(config);
  * @property {number}  [price]
  */
 
-const TABLE = 'instances';
+const TABLE = 'tournament_instances';
 
 let counter = 0;
 

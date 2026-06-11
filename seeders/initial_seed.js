@@ -48,7 +48,7 @@ async function run() {
   for (const user of playersToAdd) {
     await InstanceUserFactory.create({
       player_id: user.id,
-      instance_id: instance.id,
+      tournament_instance_id: instance.id,
     });
   }
   console.log(`Added ${playersToAdd.length} of ${generalUsers.length} general players to instance "${instance.name}":`);

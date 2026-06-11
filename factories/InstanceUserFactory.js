@@ -9,7 +9,7 @@ const db = knex(config);
  * @property {string}  [instance_id]
  */
 
-const TABLE = 'instance_users';
+const TABLE = 'user_enrollments';
 
 /**
  * Builds default instance-user attributes merged with overrides.
